@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skills - Skill Reel Rater</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/skills" class="nav-brand">Skill Reel Rater</a>
+    <% if (typeof user !== 'undefined' && user) { %>
+      <span class="nav-user">
+        <%= user.first_name %>
+        <% if (user.id === 33) { %> | <a href="/admin/ratings">Admin</a><% } %>
+        | <a href="/logout">Logout</a>
+      </span>
+    <% } %>
+  </nav>
+  <main class="container">
+    <h1>Skills Directory</h1>
+    <p class="subtitle"><%= skills.length %> skills with more than 5 performers</p>
+
+    <div class="filters-bar">
+      <div class="location-filter">
+        <label for="location-select">Location:</label>
+        <select id="location-select" onchange="filterByLocation(this.value)">
+          <option value="">All Locations</option>
+          <% locations.forEach(loc => { %>
+            <option value="<%= loc.name %>"<%= activeLocation === loc.name ? ' selected' : '' %>>
+              <%= loc.name %> (<%= loc.user_count %>)
+            </option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+
+    <div class="category-filters">
+      <a href="/skills<%= activeLocation ? '?location=' + encodeURIComponent(activeLocation) : '' %>"
+         class="cat-btn<%= !activeCategory ? ' active' : '' %>">All</a>
+      <% categories.forEach(cat => { %>
+        <a href="/skills?category=<%= encodeURIComponent(cat) %><%= activeLocation ? '&location=' + encodeURIComponent(activeLocation) : '' %>"
+           class="cat-btn<%= activeCategory === cat ? ' active' : '' %>">
+          <%= cat %>
+        </a>
+      <% }) %>
+    </div>
+
+    <div class="skills-grid">
+      <% skills.forEach(skill => { %>
+        <a href="/skill/<%= encodeURIComponent(skill.skill_name) %><%= activeLocation ? '?location=' + encodeURIComponent(activeLocation) : '' %>" class="skill-card">
+          <div class="skill-name"><%= skill.skill_name %></div>
+          <div class="skill-meta">
+            <span class="skill-category"><%= skill.category || 'Uncategorized' %></span>
+            <span class="skill-count"><%= skill.person_count %> people</span>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  </main>
+  <script>
+    function filterByLocation(location) {
+      const params = new URLSearchParams(window.location.search);
+      if (location) {
+        params.set('location', location);
+      } else {
+        params.delete('location');
+      }
+      window.location.href = '/skills' + (params.toString() ? '?' + params.toString() : '');
+    }
+  </script>
+</body>
+</html>

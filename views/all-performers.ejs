@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= skillName %> - All Performers</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/skills" class="nav-brand">Skill Reel Rater</a>
+    <% if (user) { %>
+      <span class="nav-user">
+        <%= user.first_name %>
+        <% if (user.id === 33) { %> | <a href="/admin/ratings">Admin</a><% } %>
+        | <a href="/logout">Logout</a>
+      </span>
+    <% } %>
+  </nav>
+  <main class="container">
+    <div class="breadcrumb">
+      <a href="/skills">Skills</a> &rsaquo;
+      <a href="/skill/<%= encodeURIComponent(skillName) %><%= location ? '?location=' + encodeURIComponent(location) : '' %>"><%= skillName %></a> &rsaquo;
+      <strong>All Performers</strong>
+    </div>
+
+    <h1>All Performers: <%= skillName %></h1>
+    <p class="subtitle">
+      <%= paidCount %> skill reel<%= paidCount !== 1 ? 's' : '' %> viewable,
+      <%= freeCount %> hidden
+    </p>
+
+    <div class="performers-grid">
+      <% people.forEach(person => { %>
+        <% if (person.isPaid && person.paidIndex !== null) { %>
+          <%
+            let carouselUrl = '/skill/' + encodeURIComponent(skillName) + '?idx=' + person.paidIndex;
+            if (location) carouselUrl += '&location=' + encodeURIComponent(location);
+          %>
+          <a href="<%= carouselUrl %>" class="performer-card performer-card-link">
+            <div class="person-header">
+              <% if (person.display_image) { %>
+                <img src="<%= person.display_image %>" alt="<%= person.first_name %>" class="person-avatar">
+              <% } else { %>
+                <div class="person-avatar placeholder"><%= person.first_name ? person.first_name[0] : '?' %></div>
+              <% } %>
+              <div class="person-info">
+                <span class="person-name"><%= person.first_name %> <%= person.last_name %></span>
+                <% if (person.level && person.level !== 'Not rated') { %>
+                  <span class="level-badge level-<%= person.level.toLowerCase() %>"><%= person.level %></span>
+                <% } %>
+              </div>
+            </div>
+            <% if (person.skillEmbed && person.skillEmbed.thumbnail) { %>
+              <div class="thumb-link">
+                <img src="<%= person.skillEmbed.thumbnail %>" alt="Skill Reel" class="skill-thumbnail">
+              </div>
+            <% } else if (person.skillEmbed) { %>
+              <div class="thumb-link thumb-placeholder">
+                <span>&#9654; Skill Reel</span>
+              </div>
+            <% } %>
+            <% if (person.rating) { %>
+              <span class="rating-saved">Rated: <strong><%= person.rating %>/10</strong></span>
+            <% } %>
+          </a>
+        <% } else if (person.isPaid) { %>
+          <div class="performer-card">
+            <div class="person-header">
+              <% if (person.display_image) { %>
+                <img src="<%= person.display_image %>" alt="<%= person.first_name %>" class="person-avatar">
+              <% } else { %>
+                <div class="person-avatar placeholder"><%= person.first_name ? person.first_name[0] : '?' %></div>
+              <% } %>
+              <div class="person-info">
+                <span class="person-name"><%= person.first_name %> <%= person.last_name %></span>
+                <% if (person.level && person.level !== 'Not rated') { %>
+                  <span class="level-badge level-<%= person.level.toLowerCase() %>"><%= person.level %></span>
+                <% } %>
+              </div>
+            </div>
+            <% if (person.skillEmbed && person.skillEmbed.thumbnail) { %>
+              <div class="thumb-link">
+                <img src="<%= person.skillEmbed.thumbnail %>" alt="Skill Reel" class="skill-thumbnail">
+              </div>
+            <% } else if (person.skillEmbed) { %>
+              <div class="thumb-link thumb-placeholder">
+                <span>&#9654; Skill Reel</span>
+              </div>
+            <% } %>
+            <% if (person.rating) { %>
+              <span class="rating-saved">Rated: <strong><%= person.rating %>/10</strong></span>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="performer-card performer-hidden">
+            <div class="hidden-overlay" onclick="document.getElementById('hidden-modal').style.display='flex'">
+              <span class="hidden-overlay-text">HIDDEN</span>
+            </div>
+            <div class="person-header">
+              <% if (person.display_image) { %>
+                <img src="<%= person.display_image %>" alt="<%= person.first_name %>" class="person-avatar">
+              <% } else { %>
+                <div class="person-avatar placeholder"><%= person.first_name ? person.first_name[0] : '?' %></div>
+              <% } %>
+              <div class="person-info">
+                <span class="person-name"><%= person.first_name %> <%= person.last_name %></span>
+                <% if (person.level && person.level !== 'Not rated') { %>
+                  <span class="level-badge level-<%= person.level.toLowerCase() %>"><%= person.level %></span>
+                <% } %>
+              </div>
+            </div>
+            <% if (person.skillEmbed && person.skillEmbed.thumbnail) { %>
+              <div class="thumb-disabled">
+                <img src="<%= person.skillEmbed.thumbnail %>" alt="Skill Reel" class="skill-thumbnail">
+              </div>
+            <% } else if (person.skillEmbed) { %>
+              <div class="thumb-disabled thumb-placeholder">
+                <span>&#9654; Skill Reel</span>
+              </div>
+            <% } %>
+          </div>
+        <% } %>
+      <% }) %>
+    </div>
+
+    <!-- Hidden skill reel modal -->
+    <div id="hidden-modal" class="hidden-modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+      <div class="hidden-modal">
+        <h3>Why is this skill reel hidden?</h3>
+        <p>This skill reel is hidden because skill reels are a premium feature. This user is not a premium member of StuntListing.</p>
+        <p>To upgrade to a premium membership, visit:<br>
+          <a href="https://www.stuntlisting.com/membership_plans" target="_blank" rel="noopener">stuntlisting.com/membership_plans</a>
+        </p>
+        <button class="modal-close-btn" onclick="document.getElementById('hidden-modal').style.display='none'">Close</button>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

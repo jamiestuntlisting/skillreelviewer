@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= skillName %> - Skill Reel Rater</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/skills" class="nav-brand">Skill Reel Rater</a>
+    <% if (typeof user !== 'undefined' && user) { %>
+      <span class="nav-user">
+        <%= user.first_name %>
+        <% if (user.id === 33) { %> | <a href="/admin/ratings">Admin</a><% } %>
+        | <a href="/logout">Logout</a>
+      </span>
+    <% } %>
+  </nav>
+  <main class="container">
+    <%
+      const loc = typeof location !== 'undefined' ? location : '';
+      const locParam = loc ? '&location=' + encodeURIComponent(loc) : '';
+      const locFirst = loc ? '?location=' + encodeURIComponent(loc) : '';
+    %>
+    <div class="breadcrumb">
+      <a href="/skills">Skills</a> &rsaquo; <strong><%= skillName %></strong>
+    </div>
+
+    <h1><%= skillName %></h1>
+    <p class="subtitle"><%= total %> skill reel<%= total !== 1 ? 's' : '' %><%= loc ? ' in ' + loc : '' %></p>
+    <p class="all-performers-link">
+      <a href="/skill/<%= encodeURIComponent(skillName) %>/all<%= locFirst %>">View all performers with this skill &rarr;</a>
+    </p>
+
+    <% if (person) { %>
+      <div class="viewer-nav">
+        <% if (currentIdx > 0) { %>
+          <a href="/skill/<%= encodeURIComponent(skillName) %>?idx=<%= currentIdx - 1 %><%= locParam %>" class="nav-btn">&laquo; Previous</a>
+        <% } else { %>
+          <span class="nav-btn disabled">&laquo; Previous</span>
+        <% } %>
+        <span class="nav-counter"><%= currentIdx + 1 %> of <%= totalPeople %></span>
+        <% if (currentIdx < totalPeople - 1) { %>
+          <a href="/skill/<%= encodeURIComponent(skillName) %>?idx=<%= currentIdx + 1 %><%= locParam %>" class="nav-btn">Next &raquo;</a>
+        <% } else { %>
+          <span class="nav-btn disabled">Next &raquo;</span>
+        <% } %>
+      </div>
+
+      <div class="person-card single"
+           data-skill-set-id="<%= person.skill_set_id %>"
+           data-user-id="<%= person.userId %>"
+           data-skill-name="<%= person.skill_name %>"
+           data-starred="<%= person.starred ? 'true' : 'false' %>">
+
+        <% if (person.skillEmbed && (person.skillEmbed.type === 'youtube' || person.skillEmbed.type === 'vimeo')) { %>
+          <label class="mute-toggle corner-mute"><input type="checkbox" id="mute-checkbox"> Mute</label>
+        <% } %>
+
+        <div class="person-header">
+          <% if (person.display_image) { %>
+            <img src="<%= person.display_image %>" alt="<%= person.first_name %>" class="person-avatar large">
+          <% } else { %>
+            <div class="person-avatar large placeholder"><%= person.first_name ? person.first_name[0] : '?' %></div>
+          <% } %>
+          <div class="person-info">
+            <h2 class="person-name"><%= person.first_name %> <%= person.last_name %></h2>
+            <% if (person.level && person.level !== 'Not rated') { %>
+              <span class="level-badge level-<%= person.level.toLowerCase() %>"><%= person.level %></span>
+            <% } %>
+          </div>
+        </div>
+
+        <% if (person.description) { %>
+          <p class="person-description full"><%= person.description %></p>
+        <% } %>
+
+        <% if (person.skillEmbed) { %>
+          <div class="video-section">
+            <h4>Skill Reel</h4>
+            <% if (person.skillEmbed.type === 'youtube' || person.skillEmbed.type === 'vimeo') { %>
+              <div class="video-container large">
+                <iframe id="skill-video" data-base-url="<%= person.skillEmbed.embedUrl %>" src="<%= person.skillEmbed.embedUrl %>" frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen loading="lazy"></iframe>
+              </div>
+            <% } else { %>
+              <a href="<%= person.skillEmbed.originalUrl %>" target="_blank" rel="noopener" class="video-link">
+                View Skill Reel &rarr;
+              </a>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="video-section">
+            <p class="no-video">No skill reel available</p>
+          </div>
+        <% } %>
+
+        <div class="rating-section">
+          <h4>Rate this skill reel</h4>
+          <div class="rating-buttons">
+            <% for (let i = 1; i <= 10; i++) { %>
+              <button class="rating-btn<%= person.rating === i ? ' active' : '' %>"
+                      data-value="<%= i %>"><%= i %></button>
+            <% } %>
+            <button class="rating-btn star-rating-btn<%= person.starred ? ' active' : '' %>"
+                    title="Best of the Best">&#9733;</button>
+          </div>
+          <% if (person.rating) { %>
+            <span class="rating-saved">Rated: <strong><%= person.rating %>/10</strong></span>
+          <% } %>
+          <span class="rating-status" style="display:none;"></span>
+        </div>
+
+        <div class="action-buttons">
+          <button class="action-btn not-skill-reel-btn">Not a Skill Reel</button>
+          <button class="action-btn no-demo-btn">Doesn't Demonstrate the Skill</button>
+          <button class="action-btn broken-btn">Broken Link</button>
+        </div>
+      </div>
+
+      <div class="viewer-nav bottom">
+        <% if (currentIdx > 0) { %>
+          <a href="/skill/<%= encodeURIComponent(skillName) %>?idx=<%= currentIdx - 1 %><%= locParam %>" class="nav-btn">&laquo; Previous</a>
+        <% } else { %>
+          <span class="nav-btn disabled">&laquo; Previous</span>
+        <% } %>
+        <span class="nav-counter"><%= currentIdx + 1 %> of <%= totalPeople %></span>
+        <% if (currentIdx < totalPeople - 1) { %>
+          <a href="/skill/<%= encodeURIComponent(skillName) %>?idx=<%= currentIdx + 1 %><%= locParam %>" class="nav-btn">Next &raquo;</a>
+        <% } else { %>
+          <span class="nav-btn disabled">Next &raquo;</span>
+        <% } %>
+      </div>
+    <% } else { %>
+      <p>No skill reels found for this skill.</p>
+    <% } %>
+  </main>
+  <script src="/js/ratings.js"></script>
+</body>
+</html>

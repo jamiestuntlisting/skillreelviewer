@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Ratings Log</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/skills" class="nav-brand">Skill Reel Rater</a>
+    <span class="nav-user">
+      <span class="nav-admin-badge">Admin</span>
+      <%= user.first_name %>
+      | <a href="/logout">Logout</a>
+    </span>
+  </nav>
+  <main class="container">
+    <h1>Ratings Dashboard</h1>
+    <p class="subtitle"><%= analytics.totalRatings %> total ratings</p>
+
+    <!-- Analytics Cards -->
+    <div class="analytics-grid">
+      <div class="analytics-card">
+        <div class="analytics-value"><%= analytics.totalRatings %></div>
+        <div class="analytics-label">Total Ratings</div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-value"><%= analytics.avgRating %></div>
+        <div class="analytics-label">Avg Rating</div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-value"><%= analytics.uniqueRaters %></div>
+        <div class="analytics-label">Raters</div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-value"><%= analytics.uniqueSkills %></div>
+        <div class="analytics-label">Skills Rated</div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-value"><%= analytics.uniquePerformers %></div>
+        <div class="analytics-label">Performers Rated</div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-value"><%= analytics.bestCount %></div>
+        <div class="analytics-label">Best of Best &#9733;</div>
+      </div>
+    </div>
+
+    <!-- Flags Summary -->
+    <div class="flags-summary">
+      <span class="flag-chip flag-broken"><%= analytics.brokenCount %> Broken Links</span>
+      <span class="flag-chip flag-not-reel"><%= analytics.notSkillReelCount %> Not Skill Reels</span>
+      <span class="flag-chip flag-no-demo"><%= analytics.noDemoCount %> No Demo</span>
+    </div>
+
+    <!-- Rating Distribution Bar Chart -->
+    <div class="analytics-section">
+      <h3>Rating Distribution</h3>
+      <div class="bar-chart">
+        <% const maxCount = Math.max(...Object.values(analytics.ratingDistribution), 1); %>
+        <% for (let i = 1; i <= 10; i++) { %>
+          <div class="bar-col">
+            <div class="bar-count"><%= analytics.ratingDistribution[i] %></div>
+            <div class="bar" style="height: <%= (analytics.ratingDistribution[i] / maxCount) * 120 %>px;"></div>
+            <div class="bar-label"><%= i %></div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Self-Rating vs Our Rating -->
+    <div class="analytics-section">
+      <h3>Self-Reported Level vs Our Ratings</h3>
+      <p class="section-desc">How performers rate themselves vs how we rate their skill reels</p>
+      <table class="admin-table compact">
+        <thead>
+          <tr>
+            <th>Self-Reported Level</th>
+            <th>Expected Range</th>
+            <th>Our Avg Rating</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% analytics.selfVsRated.forEach(row => { %>
+            <tr>
+              <td><span class="level-badge level-<%= row.level.toLowerCase() %>"><%= row.level %></span></td>
+              <td><%= row.expectedRange %></td>
+              <td class="rating-cell"><%= row.avg %></td>
+              <td><%= row.count %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Top Skills by Average Rating -->
+    <% if (analytics.avgBySkill.length > 0) { %>
+    <div class="analytics-section">
+      <h3>Average Rating by Skill (Top 20 by volume)</h3>
+      <table class="admin-table compact">
+        <thead>
+          <tr>
+            <th>Skill</th>
+            <th>Avg Rating</th>
+            <th>Ratings</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% analytics.avgBySkill.forEach(s => { %>
+            <tr>
+              <td><a href="/skill/<%= encodeURIComponent(s.name) %>"><%= s.name %></a></td>
+              <td class="rating-cell"><%= s.avg %></td>
+              <td><%= s.count %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+
+    <!-- Ratings Log -->
+    <div class="analytics-section">
+      <h3>Ratings Log
+        <% if (filters.rater || filters.skill || filters.performer || filters.rating || filters.date) { %>
+          <a href="/admin/ratings" class="clear-filters-btn">Clear Filters</a>
+        <% } %>
+      </h3>
+      <p class="subtitle"><%= ratings.length %> ratings shown</p>
+
+      <table class="admin-table" id="ratings-table">
+        <thead>
+          <tr>
+            <th class="sortable" data-col="0">When</th>
+            <th class="sortable" data-col="1">Rater</th>
+            <th class="sortable" data-col="2">Skill</th>
+            <th class="sortable" data-col="3">Performer</th>
+            <th class="sortable" data-col="4">Rating</th>
+          </tr>
+          <tr class="filter-row">
+            <td>
+              <select id="filter-date" onchange="applyFilters()">
+                <option value="">All</option>
+                <% dateOptions.forEach(d => { %>
+                  <option value="<%= d %>"<%= filters.date === d ? ' selected' : '' %>><%= d %></option>
+                <% }) %>
+              </select>
+            </td>
+            <td>
+              <select id="filter-rater" onchange="applyFilters()">
+                <option value="">All</option>
+                <% raterOptions.forEach(r => { %>
+                  <option value="<%= r.id %>"<%= filters.rater == r.id ? ' selected' : '' %>><%= r.name %></option>
+                <% }) %>
+              </select>
+            </td>
+            <td>
+              <select id="filter-skill" onchange="applyFilters()">
+                <option value="">All</option>
+                <% skillOptions.forEach(s => { %>
+                  <option value="<%= s %>"<%= filters.skill === s ? ' selected' : '' %>><%= s %></option>
+                <% }) %>
+              </select>
+            </td>
+            <td>
+              <select id="filter-performer" onchange="applyFilters()">
+                <option value="">All</option>
+                <% performerOptions.forEach(p => { %>
+                  <option value="<%= p.id %>"<%= filters.performer == p.id ? ' selected' : '' %>><%= p.name %></option>
+                <% }) %>
+              </select>
+            </td>
+            <td>
+              <select id="filter-rating" onchange="applyFilters()">
+                <option value="">All</option>
+                <% for (let i = 1; i <= 10; i++) { %>
+                  <option value="<%= i %>"<%= filters.rating == i ? ' selected' : '' %>><%= i %></option>
+                <% } %>
+              </select>
+            </td>
+          </tr>
+        </thead>
+        <tbody>
+          <% ratings.forEach(r => { %>
+            <tr>
+              <td data-sort="<%= r.updated_at || r.created_at %>"><%= r.updated_at || r.created_at %></td>
+              <td data-sort="<%= r.rater_name %>">
+                <%= r.rater_name %>
+                <% if (r.rater_email) { %>
+                  <br><small class="text-muted"><%= r.rater_email %></small>
+                <% } %>
+              </td>
+              <td data-sort="<%= r.skill_name %>">
+                <a href="/skill/<%= encodeURIComponent(r.skill_name) %>"><%= r.skill_name %></a>
+              </td>
+              <td data-sort="<%= r.performer_name %>"><%= r.performer_name %></td>
+              <td data-sort="<%= r.rating %>" class="rating-cell"><%= r.rating %>/10</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    function applyFilters() {
+      const params = new URLSearchParams();
+      const rater = document.getElementById('filter-rater').value;
+      const skill = document.getElementById('filter-skill').value;
+      const performer = document.getElementById('filter-performer').value;
+      const rating = document.getElementById('filter-rating').value;
+      const date = document.getElementById('filter-date').value;
+      if (rater) params.set('rater', rater);
+      if (skill) params.set('skill', skill);
+      if (performer) params.set('performer', performer);
+      if (rating) params.set('rating', rating);
+      if (date) params.set('date', date);
+      window.location.href = '/admin/ratings' + (params.toString() ? '?' + params.toString() : '');
+    }
+
+    // Sortable table columns
+    document.querySelectorAll('.sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        const table = document.getElementById('ratings-table');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const col = parseInt(th.dataset.col);
+        const asc = th.classList.contains('sort-asc');
+
+        // Reset all
+        document.querySelectorAll('.sortable').forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+        th.classList.add(asc ? 'sort-desc' : 'sort-asc');
+
+        rows.sort((a, b) => {
+          const aVal = a.children[col].dataset.sort || a.children[col].textContent.trim();
+          const bVal = b.children[col].dataset.sort || b.children[col].textContent.trim();
+          const aNum = parseFloat(aVal);
+          const bNum = parseFloat(bVal);
+          if (!isNaN(aNum) && !isNaN(bNum)) {
+            return asc ? bNum - aNum : aNum - bNum;
+          }
+          return asc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+      });
+    });
+  </script>
+</body>
+</html>
