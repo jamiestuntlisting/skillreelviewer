@@ -10,6 +10,9 @@
   "author": "",
   "license": "ISC",
   "description": "",
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "better-sqlite3": "^12.6.2",
     "connect-sqlite3": "^0.9.16",
