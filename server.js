@@ -5,10 +5,21 @@ const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
 const { requireAuth } = require('./middleware/auth');
 
+// Catch unhandled errors so we can see them in logs
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err);
+});
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION:', err);
+});
+
 const app = express();
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// Health check — before any middleware, no auth needed
+app.get('/health', (req, res) => res.status(200).send('OK'));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -31,7 +42,12 @@ app.use(session({
 }));
 
 // Initialize SQLite (creates tables on require)
-require('./db/sqlite');
+try {
+  require('./db/sqlite');
+  console.log('SQLite initialized successfully');
+} catch (err) {
+  console.error('SQLite initialization FAILED:', err);
+}
 
 // Make user available to all templates
 app.use((req, res, next) => {
