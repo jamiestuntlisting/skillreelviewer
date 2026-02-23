@@ -5,9 +5,8 @@ const sqlite = require('../db/sqlite');
 const upsert = sqlite.prepare(`
   INSERT INTO ratings (skill_set_id, user_id, skill_name, rating, rater_id, updated_at)
   VALUES (?, ?, ?, ?, ?, datetime('now'))
-  ON CONFLICT(skill_set_id) DO UPDATE SET
+  ON CONFLICT(skill_set_id, rater_id) DO UPDATE SET
     rating = excluded.rating,
-    rater_id = excluded.rater_id,
     updated_at = datetime('now')
 `);
 

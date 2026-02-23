@@ -142,8 +142,9 @@ router.get('/skill/:skillName/all', async (req, res, next) => {
       });
     await Promise.all(vimeoPromises);
 
-    // Get ratings for all performers
-    const ratingRows = sqlite.prepare('SELECT skill_set_id, rating FROM ratings').all();
+    // Get current rater's ratings for all performers
+    const raterId = req.session.user ? req.session.user.id : null;
+    const ratingRows = sqlite.prepare('SELECT skill_set_id, rating FROM ratings WHERE rater_id = ?').all(raterId);
     const ratingMap = {};
     ratingRows.forEach(r => { ratingMap[r.skill_set_id] = r.rating; });
 
@@ -228,9 +229,10 @@ router.get('/skill/:skillName', async (req, res, next) => {
     });
   }
 
+  const raterId = req.session.user ? req.session.user.id : null;
   const ratingRow = sqlite
-    .prepare('SELECT rating FROM ratings WHERE skill_set_id = ?')
-    .get(person.skill_set_id);
+    .prepare('SELECT rating FROM ratings WHERE skill_set_id = ? AND rater_id = ?')
+    .get(person.skill_set_id, raterId);
 
   const bestRow = sqlite
     .prepare('SELECT id FROM best_skill_reels WHERE skill_set_id = ?')
