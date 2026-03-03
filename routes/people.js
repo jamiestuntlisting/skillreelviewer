@@ -88,19 +88,39 @@ function getEmbedInfo(url) {
 }
 
 function getExcludedIds(reelType = 'skill') {
-  const brokenIds = new Set(
-    sqlite.prepare("SELECT skill_set_id FROM broken_links WHERE COALESCE(reel_type, 'skill') = ?").all(reelType).map(r => r.skill_set_id)
-  );
-  const notSkillReelIds = new Set(
-    sqlite.prepare("SELECT skill_set_id FROM not_skill_reels WHERE COALESCE(reel_type, 'skill') = ?").all(reelType).map(r => r.skill_set_id)
-  );
-  const noDemoSkillIds = new Set(
-    sqlite.prepare("SELECT skill_set_id FROM no_demo_skill WHERE COALESCE(reel_type, 'skill') = ?").all(reelType).map(r => r.skill_set_id)
-  );
-  const hiddenReelIds = new Set(
-    sqlite.prepare("SELECT skill_set_id FROM hidden_reels WHERE COALESCE(reel_type, 'skill') = ?").all(reelType).map(r => r.skill_set_id)
-  );
-  return { brokenIds, notSkillReelIds, noDemoSkillIds, hiddenReelIds };
+  try {
+    const brokenIds = new Set(
+      sqlite.prepare("SELECT skill_set_id FROM broken_links WHERE COALESCE(reel_type, 'skill') = ?").all(reelType).map(r => r.skill_set_id)
+    );
+    const notSkillReelIds = new Set(
+      sqlite.prepare("SELECT skill_set_id FROM not_skill_reels WHERE COALESCE(reel_type, 'skill') = ?").all(reelType).map(r => r.skill_set_id)
+    );
+    const noDemoSkillIds = new Set(
+      sqlite.prepare("SELECT skill_set_id FROM no_demo_skill WHERE COALESCE(reel_type, 'skill') = ?").all(reelType).map(r => r.skill_set_id)
+    );
+    const hiddenReelIds = new Set(
+      sqlite.prepare("SELECT skill_set_id FROM hidden_reels WHERE COALESCE(reel_type, 'skill') = ?").all(reelType).map(r => r.skill_set_id)
+    );
+    return { brokenIds, notSkillReelIds, noDemoSkillIds, hiddenReelIds };
+  } catch (e) {
+    // Fallback if reel_type column doesn't exist yet
+    const brokenIds = new Set(
+      sqlite.prepare('SELECT skill_set_id FROM broken_links').all().map(r => r.skill_set_id)
+    );
+    const notSkillReelIds = new Set(
+      sqlite.prepare('SELECT skill_set_id FROM not_skill_reels').all().map(r => r.skill_set_id)
+    );
+    const noDemoSkillIds = new Set(
+      sqlite.prepare('SELECT skill_set_id FROM no_demo_skill').all().map(r => r.skill_set_id)
+    );
+    let hiddenReelIds = new Set();
+    try {
+      hiddenReelIds = new Set(
+        sqlite.prepare('SELECT skill_set_id FROM hidden_reels').all().map(r => r.skill_set_id)
+      );
+    } catch (e2) { /* table may not exist */ }
+    return { brokenIds, notSkillReelIds, noDemoSkillIds, hiddenReelIds };
+  }
 }
 
 // Build location WHERE clause + params
@@ -490,7 +510,12 @@ router.get('/stunt-reels/all', async (req, res, next) => {
 
     // Get likes for current rater
     const raterId = req.session.user ? req.session.user.id : null;
-    const likedRows = sqlite.prepare("SELECT skill_set_id FROM likes WHERE rater_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'").all(raterId);
+    let likedRows = [];
+    try {
+      likedRows = sqlite.prepare("SELECT skill_set_id FROM likes WHERE rater_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'").all(raterId);
+    } catch (e) {
+      likedRows = sqlite.prepare("SELECT skill_set_id FROM likes WHERE rater_id = ?").all(raterId);
+    }
     const likedSet = new Set(likedRows.map(r => r.skill_set_id));
 
     enrichedReels.forEach(r => { r.liked = likedSet.has(r.stunt_reel_id); });
@@ -563,19 +588,18 @@ router.get('/stunt-reels', async (req, res, next) => {
     }
 
     const raterId = req.session.user ? req.session.user.id : null;
-    const likeRow = sqlite
-      .prepare("SELECT id FROM likes WHERE skill_set_id = ? AND rater_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'")
-      .get(reel.stunt_reel_id, raterId);
-    const likeCount = sqlite
-      .prepare("SELECT COUNT(*) AS count FROM likes WHERE skill_set_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'")
-      .get(reel.stunt_reel_id).count;
-
-    const bestRow = sqlite
-      .prepare("SELECT id FROM best_skill_reels WHERE skill_set_id = ? AND rater_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'")
-      .get(reel.stunt_reel_id, raterId);
-    const bestCount = sqlite
-      .prepare("SELECT COUNT(*) AS count FROM best_skill_reels WHERE skill_set_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'")
-      .get(reel.stunt_reel_id).count;
+    let likeRow, likeCount, bestRow, bestCount;
+    try {
+      likeRow = sqlite.prepare("SELECT id FROM likes WHERE skill_set_id = ? AND rater_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'").get(reel.stunt_reel_id, raterId);
+      likeCount = sqlite.prepare("SELECT COUNT(*) AS count FROM likes WHERE skill_set_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'").get(reel.stunt_reel_id).count;
+      bestRow = sqlite.prepare("SELECT id FROM best_skill_reels WHERE skill_set_id = ? AND rater_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'").get(reel.stunt_reel_id, raterId);
+      bestCount = sqlite.prepare("SELECT COUNT(*) AS count FROM best_skill_reels WHERE skill_set_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'").get(reel.stunt_reel_id).count;
+    } catch (e) {
+      likeRow = sqlite.prepare("SELECT id FROM likes WHERE skill_set_id = ? AND rater_id = ?").get(reel.stunt_reel_id, raterId);
+      likeCount = sqlite.prepare("SELECT COUNT(*) AS count FROM likes WHERE skill_set_id = ?").get(reel.stunt_reel_id).count;
+      bestRow = sqlite.prepare("SELECT id FROM best_skill_reels WHERE skill_set_id = ? AND rater_id = ?").get(reel.stunt_reel_id, raterId);
+      bestCount = sqlite.prepare("SELECT COUNT(*) AS count FROM best_skill_reels WHERE skill_set_id = ?").get(reel.stunt_reel_id).count;
+    }
     const bestRemaining = 2 - sqlite
       .prepare("SELECT COUNT(*) AS count FROM best_skill_reels WHERE rater_id = ? AND created_at >= datetime('now', '-7 days')")
       .get(raterId).count;

@@ -190,12 +190,13 @@ router.get('/ratings', async (req, res, next) => {
     ).get().c;
 
     // Stunt reel engagement
-    const stuntLikes = sqlite.prepare(
-      "SELECT COUNT(*) as c FROM likes WHERE COALESCE(reel_type, 'skill') = 'stunt'"
-    ).get().c;
-    const stuntBests = sqlite.prepare(
-      "SELECT COUNT(*) as c FROM best_skill_reels WHERE COALESCE(reel_type, 'skill') = 'stunt'"
-    ).get().c;
+    let stuntLikes = 0, stuntBests = 0;
+    try {
+      stuntLikes = sqlite.prepare("SELECT COUNT(*) as c FROM likes WHERE COALESCE(reel_type, 'skill') = 'stunt'").get().c;
+      stuntBests = sqlite.prepare("SELECT COUNT(*) as c FROM best_skill_reels WHERE COALESCE(reel_type, 'skill') = 'stunt'").get().c;
+    } catch (e) {
+      // reel_type column may not exist yet
+    }
 
     // Feedback stats
     const activeFeedbackRequests = sqlite.prepare(
