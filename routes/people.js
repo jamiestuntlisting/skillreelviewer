@@ -185,6 +185,7 @@ router.get('/skill/:skillName/all', async (req, res, next) => {
 router.get('/skill/:skillName', async (req, res, next) => {
   try {
   const skillName = req.params.skillName;
+  const shareId = req.query.id ? parseInt(req.query.id) : null;
   const idx = parseInt(req.query.idx) || 0;
   const location = req.query.location || '';
   const locFilter = locationFilter(location);
@@ -225,7 +226,15 @@ router.get('/skill/:skillName', async (req, res, next) => {
   );
 
   const total = people.length;
-  const currentIdx = Math.max(0, Math.min(idx, people.length - 1));
+
+  // Support ?id=SKILL_SET_ID for stable share URLs
+  let currentIdx;
+  if (shareId) {
+    const foundIdx = people.findIndex(p => p.skill_set_id === shareId);
+    currentIdx = foundIdx >= 0 ? foundIdx : 0;
+  } else {
+    currentIdx = Math.max(0, Math.min(idx, people.length - 1));
+  }
   const person = people[currentIdx];
 
   if (!person) {

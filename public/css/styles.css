@@ -365,13 +365,13 @@ h1 {
 .like-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+  gap: 10px;
+  padding: 14px 32px;
   border: 1px solid #30363d;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #21262d;
   color: #c9d1d9;
-  font-size: 1rem;
+  font-size: 1.2rem;
   cursor: pointer;
   transition: all 0.15s;
   position: relative;
@@ -386,8 +386,8 @@ h1 {
   border-color: #1f6feb;
   color: #fff;
 }
-.like-icon { font-size: 1.3rem; }
-.like-count { font-size: 0.9rem; font-weight: 600; }
+.like-icon { font-size: 1.6rem; }
+.like-count { font-size: 1.05rem; font-weight: 600; }
 .like-btn.like-pop { animation: likePop 0.4s ease; }
 @keyframes likePop {
   0% { transform: scale(1); }
@@ -437,6 +437,34 @@ h1 {
   margin-top: 4px;
 }
 .best-remaining-count { font-weight: 600; color: #f0c040; }
+
+/* Hide Best button and remaining text until video is liked */
+.person-card[data-liked="false"] .best-btn,
+.feed-card[data-liked="false"] .best-btn { display: none; }
+.person-card[data-liked="false"] .best-remaining,
+.feed-card[data-liked="false"] .best-remaining { display: none; }
+
+/* Share button */
+.share-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  background: #21262d;
+  color: #8b949e;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.share-btn:hover {
+  background: #1a3a5c;
+  border-color: #58a6ff;
+  color: #58a6ff;
+}
+.share-icon { font-size: 1.1rem; }
+
 .best-btn.star-pop {
   animation: starPop 0.6s ease;
 }

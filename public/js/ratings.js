@@ -99,6 +99,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Share button handler
+  document.querySelectorAll('.share-btn').forEach(btn => {
+    btn.addEventListener('click', async function () {
+      const card = this.closest('.person-card') || this.closest('.feed-card');
+      const skillName = card.dataset.skillName;
+      const skillSetId = card.dataset.skillSetId;
+      const url = window.location.origin + '/skill/' + encodeURIComponent(skillName) + '?id=' + skillSetId;
+      try {
+        await navigator.clipboard.writeText(url);
+        showStatus(card, 'Link copied!');
+      } catch (err) {
+        // Fallback for older browsers
+        const input = document.createElement('input');
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        showStatus(card, 'Link copied!');
+      }
+    });
+  });
+
   // Broken link button handler
   document.querySelectorAll('.broken-btn').forEach(btn => {
     btn.addEventListener('click', async function () {
