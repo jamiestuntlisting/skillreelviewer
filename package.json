@@ -14,6 +14,7 @@
     "node": "20.x"
   },
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
     "better-sqlite3": "^12.6.2",
     "connect-sqlite3": "^0.9.16",
     "dotenv": "^17.3.1",

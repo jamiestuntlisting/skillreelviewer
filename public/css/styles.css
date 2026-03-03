@@ -1304,3 +1304,202 @@ a.performer-card-link:hover {
 .feed-card .best-btn {
   /* ensure the buttons use the shared styles */
 }
+
+/* My Reels page */
+.my-reels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.reel-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 16px;
+}
+.reel-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.reel-skill-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f0f6fc;
+}
+.reel-level {
+  font-size: 0.78rem;
+  color: #8b949e;
+  margin-top: 2px;
+}
+.reel-status-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.status-badge {
+  font-size: 0.72rem;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+.status-hidden {
+  background: #3d1f1f;
+  color: #f85149;
+  border: 1px solid #6e3630;
+}
+.status-feedback-open {
+  background: #1b3a4b;
+  color: #48bfe3;
+  border: 1px solid #2d5a7b;
+}
+.status-feedback-count {
+  background: #1b4332;
+  color: #52b788;
+  border: 1px solid #2d6b4a;
+}
+.reel-thumb {
+  margin-bottom: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.reel-thumb img {
+  width: 100%;
+  display: block;
+}
+.reel-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.reel-action-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid #30363d;
+  background: #21262d;
+  color: #c9d1d9;
+}
+.reel-action-btn:hover {
+  background: #30363d;
+}
+.reel-action-btn.hide-active {
+  background: #3d1f1f;
+  border-color: #6e3630;
+  color: #f85149;
+}
+.reel-action-btn.feedback-active {
+  background: #1b3a4b;
+  border-color: #2d5a7b;
+  color: #48bfe3;
+}
+
+/* Feedback pages */
+.feedback-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.feedback-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 16px;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: border-color 0.15s;
+}
+.feedback-card:hover {
+  border-color: #58a6ff;
+  text-decoration: none;
+}
+.feedback-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.days-remaining {
+  font-size: 0.78rem;
+  color: #f0c040;
+  font-weight: 600;
+}
+.feedback-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: #8b949e;
+}
+
+/* Feedback detail page */
+.feedback-form {
+  margin: 20px 0;
+}
+.feedback-form textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #c9d1d9;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+}
+.feedback-form textarea:focus {
+  outline: none;
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.3);
+}
+.feedback-submit-btn {
+  margin-top: 8px;
+  padding: 10px 24px;
+  background: #1f6feb;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.feedback-submit-btn:hover {
+  background: #388bfd;
+}
+.feedback-submission {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.feedback-reviewer {
+  font-weight: 600;
+  color: #f0f6fc;
+  font-size: 0.92rem;
+}
+.feedback-timestamp {
+  font-size: 0.75rem;
+  color: #484f58;
+  margin-left: 8px;
+}
+.feedback-text {
+  margin-top: 8px;
+  color: #c9d1d9;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #8b949e;
+}

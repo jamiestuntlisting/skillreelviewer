@@ -68,7 +68,10 @@ function getExcludedIds() {
   const noDemoSkillIds = new Set(
     sqlite.prepare('SELECT skill_set_id FROM no_demo_skill').all().map(r => r.skill_set_id)
   );
-  return { brokenIds, notSkillReelIds, noDemoSkillIds };
+  const hiddenReelIds = new Set(
+    sqlite.prepare('SELECT skill_set_id FROM hidden_reels').all().map(r => r.skill_set_id)
+  );
+  return { brokenIds, notSkillReelIds, noDemoSkillIds, hiddenReelIds };
 }
 
 // Build location WHERE clause + params
@@ -114,13 +117,14 @@ router.get('/skill/:skillName/all', async (req, res, next) => {
       [skillName, ...locFilter.params]
     );
 
-    const { brokenIds, notSkillReelIds, noDemoSkillIds } = getExcludedIds();
+    const { brokenIds, notSkillReelIds, noDemoSkillIds, hiddenReelIds } = getExcludedIds();
 
     const people = allPeople
       .filter(p =>
         !brokenIds.has(p.skill_set_id) &&
         !notSkillReelIds.has(p.skill_set_id) &&
-        !noDemoSkillIds.has(p.skill_set_id)
+        !noDemoSkillIds.has(p.skill_set_id) &&
+        !hiddenReelIds.has(p.skill_set_id)
       )
       .map(p => {
         const isPaid = ['standard_monthly', 'standard_yearly', 'plus_monthly', 'plus_yearly']
@@ -218,11 +222,12 @@ router.get('/skill/:skillName', async (req, res, next) => {
     [skillName, ...locFilter.params]
   );
 
-  const { brokenIds, notSkillReelIds, noDemoSkillIds } = getExcludedIds();
+  const { brokenIds, notSkillReelIds, noDemoSkillIds, hiddenReelIds } = getExcludedIds();
   const people = allPeople.filter(p =>
     !brokenIds.has(p.skill_set_id) &&
     !notSkillReelIds.has(p.skill_set_id) &&
-    !noDemoSkillIds.has(p.skill_set_id)
+    !noDemoSkillIds.has(p.skill_set_id) &&
+    !hiddenReelIds.has(p.skill_set_id)
   );
 
   const total = people.length;
@@ -319,13 +324,14 @@ router.get('/feed', async (req, res, next) => {
     const hasMore = reels.length > limit;
     const pageReels = reels.slice(0, limit);
 
-    const { brokenIds, notSkillReelIds, noDemoSkillIds } = getExcludedIds();
+    const { brokenIds, notSkillReelIds, noDemoSkillIds, hiddenReelIds } = getExcludedIds();
 
     const feedItems = pageReels
       .filter(p =>
         !brokenIds.has(p.skill_set_id) &&
         !notSkillReelIds.has(p.skill_set_id) &&
-        !noDemoSkillIds.has(p.skill_set_id)
+        !noDemoSkillIds.has(p.skill_set_id) &&
+        !hiddenReelIds.has(p.skill_set_id)
       )
       .map(p => ({
         ...p,

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Reels - Skill Reel Rater</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/skills" class="nav-brand">Skill Reel Rater</a>
+    <% if (user) { %>
+      <span class="nav-user">
+        <%= user.first_name %>
+        | <a href="/my-reels"><strong>My Reels</strong></a>
+        | <a href="/feedback">Feedback</a>
+        | <a href="/feed">Feed</a>
+        <% if (user.id === 33) { %> | <a href="/admin/ratings">Admin</a><% } %>
+        | <a href="/logout">Logout</a>
+      </span>
+    <% } %>
+  </nav>
+  <main class="container">
+    <h1>My Reels</h1>
+    <p class="subtitle"><%= reels.length %> skill reel<%= reels.length !== 1 ? 's' : '' %></p>
+
+    <% if (reels.length === 0) { %>
+      <div class="empty-state">
+        <p>You don't have any skill reels yet.</p>
+        <p>Add skill reels on <a href="https://www.stuntlisting.com" target="_blank" rel="noopener">StuntListing</a> to manage them here.</p>
+      </div>
+    <% } else { %>
+      <div class="my-reels-grid">
+        <% reels.forEach(reel => { %>
+          <div class="reel-card" data-skill-set-id="<%= reel.skill_set_id %>">
+            <div class="reel-card-header">
+              <div>
+                <div class="reel-skill-name"><%= reel.skill_name %></div>
+                <% if (reel.level && reel.level !== 'Not rated') { %>
+                  <div class="reel-level"><%= reel.level %></div>
+                <% } %>
+              </div>
+              <div class="reel-status-badges">
+                <% if (reel.isHidden) { %>
+                  <span class="status-badge status-hidden">Hidden</span>
+                <% } %>
+                <% if (reel.feedbackRequest) { %>
+                  <span class="status-badge status-feedback-open">Feedback Open</span>
+                <% } %>
+                <% if (reel.feedbackCount > 0) { %>
+                  <span class="status-badge status-feedback-count"><%= reel.feedbackCount %> feedback</span>
+                <% } %>
+              </div>
+            </div>
+
+            <% if (reel.skillEmbed && reel.skillEmbed.thumbnail) { %>
+              <div class="reel-thumb">
+                <img src="<%= reel.skillEmbed.thumbnail %>" alt="<%= reel.skill_name %>">
+              </div>
+            <% } %>
+
+            <div class="reel-actions">
+              <button class="reel-action-btn hide-btn<%= reel.isHidden ? ' hide-active' : '' %>"
+                      onclick="toggleHide(<%= reel.skill_set_id %>, this)">
+                <%= reel.isHidden ? 'Unhide' : 'Hide from Reviewers' %>
+              </button>
+              <% if (!reel.feedbackRequest) { %>
+                <button class="reel-action-btn feedback-req-btn"
+                        onclick="requestFeedback(<%= reel.skill_set_id %>, this)">
+                  Request Feedback
+                </button>
+              <% } else { %>
+                <a href="/feedback/<%= reel.feedbackRequest.request_id %>" class="reel-action-btn feedback-active">
+                  View Feedback
+                </a>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </main>
+  <script>
+    async function toggleHide(skillSetId, btn) {
+      try {
+        const res = await fetch('/my-reels/hide', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ skill_set_id: skillSetId }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          btn.textContent = data.hidden ? 'Unhide' : 'Hide from Reviewers';
+          btn.classList.toggle('hide-active', data.hidden);
+          const card = btn.closest('.reel-card');
+          const badges = card.querySelector('.reel-status-badges');
+          const existingHidden = badges.querySelector('.status-hidden');
+          if (data.hidden && !existingHidden) {
+            const badge = document.createElement('span');
+            badge.className = 'status-badge status-hidden';
+            badge.textContent = 'Hidden';
+            badges.prepend(badge);
+          } else if (!data.hidden && existingHidden) {
+            existingHidden.remove();
+          }
+        }
+      } catch (err) {
+        console.error('Hide toggle failed:', err);
+      }
+    }
+
+    async function requestFeedback(skillSetId, btn) {
+      try {
+        const res = await fetch('/my-reels/request-feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ skill_set_id: skillSetId }),
+        });
+        if (res.ok) {
+          btn.textContent = 'Feedback Requested';
+          btn.disabled = true;
+          btn.classList.add('feedback-active');
+          const card = btn.closest('.reel-card');
+          const badges = card.querySelector('.reel-status-badges');
+          const badge = document.createElement('span');
+          badge.className = 'status-badge status-feedback-open';
+          badge.textContent = 'Feedback Open';
+          badges.appendChild(badge);
+        } else if (res.status === 409) {
+          btn.textContent = 'Already requested';
+          btn.disabled = true;
+        }
+      } catch (err) {
+        console.error('Feedback request failed:', err);
+      }
+    }
+  </script>
+</body>
+</html>

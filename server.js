@@ -62,6 +62,7 @@ app.use('/', require('./routes/auth'));
 app.use(requireAuth);
 app.use('/', require('./routes/skills'));
 app.use('/', require('./routes/people'));
+app.use('/', require('./routes/performer'));
 app.use('/api', require('./routes/ratings'));
 app.use('/admin', require('./routes/admin'));
 

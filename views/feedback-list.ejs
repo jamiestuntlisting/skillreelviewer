@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reels Open for Feedback - Skill Reel Rater</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/skills" class="nav-brand">Skill Reel Rater</a>
+    <% if (user) { %>
+      <span class="nav-user">
+        <%= user.first_name %>
+        | <a href="/my-reels">My Reels</a>
+        | <a href="/feedback"><strong>Feedback</strong></a>
+        | <a href="/feed">Feed</a>
+        <% if (user.id === 33) { %> | <a href="/admin/ratings">Admin</a><% } %>
+        | <a href="/logout">Logout</a>
+      </span>
+    <% } %>
+  </nav>
+  <main class="container">
+    <h1>Reels Open for Feedback</h1>
+    <p class="subtitle">Help performers improve by leaving private feedback on their skill reels</p>
+
+    <% if (reels.length === 0) { %>
+      <div class="empty-state">
+        <p>No reels are currently open for feedback.</p>
+        <p>Check back later, or request feedback on your own reels from <a href="/my-reels">My Reels</a>.</p>
+      </div>
+    <% } else { %>
+      <div class="feedback-grid">
+        <% reels.forEach(reel => { %>
+          <a href="/feedback/<%= reel.requestId %>" class="feedback-card">
+            <div class="feedback-card-header">
+              <% if (reel.display_image) { %>
+                <img src="<%= reel.display_image %>" alt="<%= reel.first_name %>" class="person-avatar">
+              <% } else { %>
+                <div class="person-avatar placeholder"><%= reel.first_name ? reel.first_name[0] : '?' %></div>
+              <% } %>
+              <div>
+                <div class="person-name"><%= reel.first_name %> <%= reel.last_name %></div>
+                <div class="reel-skill-name" style="font-size:0.9rem"><%= reel.skill_name %></div>
+              </div>
+            </div>
+
+            <% if (reel.skillEmbed && reel.skillEmbed.thumbnail) { %>
+              <div class="reel-thumb">
+                <img src="<%= reel.skillEmbed.thumbnail %>" alt="<%= reel.skill_name %>">
+              </div>
+            <% } %>
+
+            <div class="feedback-meta">
+              <span class="days-remaining"><%= reel.daysRemaining %> day<%= reel.daysRemaining !== 1 ? 's' : '' %> remaining</span>
+              <span><%= reel.feedbackCount %> feedback<%= reel.feedbackCount !== 1 ? 's' : '' %></span>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </main>
+</body>
+</html>

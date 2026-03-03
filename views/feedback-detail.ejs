@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback: <%= reel.skill_name %> - Skill Reel Rater</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/skills" class="nav-brand">Skill Reel Rater</a>
+    <% if (user) { %>
+      <span class="nav-user">
+        <%= user.first_name %>
+        | <a href="/my-reels">My Reels</a>
+        | <a href="/feedback">Feedback</a>
+        | <a href="/feed">Feed</a>
+        <% if (user.id === 33) { %> | <a href="/admin/ratings">Admin</a><% } %>
+        | <a href="/logout">Logout</a>
+      </span>
+    <% } %>
+  </nav>
+  <main class="container">
+    <div class="breadcrumb">
+      <a href="/feedback">Feedback</a> &rsaquo; <strong><%= reel.skill_name %></strong>
+    </div>
+
+    <div class="person-card single" style="margin-top:16px">
+      <div class="person-header">
+        <% if (reel.display_image) { %>
+          <img src="<%= reel.display_image %>" alt="<%= reel.first_name %>" class="person-avatar large">
+        <% } else { %>
+          <div class="person-avatar large placeholder"><%= reel.first_name ? reel.first_name[0] : '?' %></div>
+        <% } %>
+        <div class="person-info">
+          <h2 class="person-name"><%= reel.first_name %> <%= reel.last_name %></h2>
+          <% if (reel.level && reel.level !== 'Not rated') { %>
+            <span class="level-badge level-<%= reel.level.toLowerCase() %>"><%= reel.level %></span>
+          <% } %>
+        </div>
+      </div>
+
+      <% if (reel.description) { %>
+        <p class="person-description full"><%= reel.description %></p>
+      <% } %>
+
+      <% if (reel.skillEmbed) { %>
+        <div class="video-section">
+          <h4><%= reel.skill_name %></h4>
+          <% if (reel.skillEmbed.type === 'youtube' || reel.skillEmbed.type === 'vimeo') { %>
+            <div class="video-container large">
+              <iframe src="<%= reel.skillEmbed.embedUrl %>" frameborder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowfullscreen loading="lazy"></iframe>
+            </div>
+          <% } else { %>
+            <a href="<%= reel.skillEmbed.originalUrl %>" target="_blank" rel="noopener" class="video-link">
+              View Skill Reel &rarr;
+            </a>
+          <% } %>
+        </div>
+      <% } %>
+
+      <div style="margin-top:12px">
+        <span class="days-remaining"><%= daysRemaining %> day<%= daysRemaining !== 1 ? 's' : '' %> remaining for feedback</span>
+      </div>
+    </div>
+
+    <% if (!isOwnReel) { %>
+      <div class="feedback-form">
+        <h3>Leave Feedback</h3>
+        <p class="subtitle">Your feedback will be sent privately to the performer via email.</p>
+        <form method="POST" action="/feedback/<%= requestId %>">
+          <textarea name="feedback_text" placeholder="Share your thoughts on this skill reel..." required></textarea>
+          <button type="submit" class="feedback-submit-btn">Submit Feedback</button>
+        </form>
+      </div>
+    <% } else { %>
+      <div style="margin:20px 0; padding:16px; background:#161b22; border:1px solid #30363d; border-radius:8px;">
+        <p style="color:#8b949e;">This is your reel. Feedback from others will appear below.</p>
+      </div>
+    <% } %>
+
+    <% if (submissions.length > 0) { %>
+      <h3 style="margin-top:24px; margin-bottom:12px;">Feedback (<%= submissions.length %>)</h3>
+      <% submissions.forEach(s => { %>
+        <div class="feedback-submission">
+          <span class="feedback-reviewer"><%= s.reviewer_name %></span>
+          <span class="feedback-timestamp"><%= s.created_at ? s.created_at.substring(0, 16).replace('T', ' ') : '' %></span>
+          <p class="feedback-text"><%= s.feedback_text %></p>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="empty-state" style="margin-top:24px;">
+        <p>No feedback has been submitted yet.</p>
+      </div>
+    <% } %>
+  </main>
+</body>
+</html>
