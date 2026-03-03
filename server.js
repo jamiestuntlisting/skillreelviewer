@@ -49,9 +49,25 @@ try {
   console.error('SQLite initialization FAILED:', err);
 }
 
-// Make user available to all templates
+// Make user + feedback count available to all templates
+const sqlite = require('./db/sqlite');
 app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
+  if (res.locals.user) {
+    try {
+      const count = sqlite.prepare(
+        `SELECT COUNT(*) AS c FROM feedback_submissions fs
+         JOIN feedback_requests fr ON fs.feedback_request_id = fr.id
+         WHERE fr.user_id = ?
+           AND datetime(fr.created_at, '+14 days') > datetime('now')`
+      ).get(res.locals.user.id).c;
+      res.locals.feedbackCount = count;
+    } catch (e) {
+      res.locals.feedbackCount = 0;
+    }
+  } else {
+    res.locals.feedbackCount = 0;
+  }
   next();
 });
 

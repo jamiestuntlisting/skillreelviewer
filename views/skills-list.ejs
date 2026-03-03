@@ -11,11 +11,10 @@
     <a href="/skills" class="nav-brand">Skill Reel Rater</a>
     <% if (typeof user !== 'undefined' && user) { %>
       <span class="nav-user">
-        <%= user.first_name %>
-        | <a href="/my-reels">My Reels</a>
-        | <a href="/feedback">Feedback</a>
-        <% if (user.id === 33) { %> | <a href="/admin/ratings">Admin</a><% } %>
-        | <a href="/logout">Logout</a>
+        <a href="/my-reels">My Skill Reels</a>
+        <a href="/feedback">Feedback Requests<% if (feedbackCount > 0) { %><span class="nav-link-badge"><%= feedbackCount %></span><% } %></a>
+        <% if (user.id === 33) { %><a href="/admin/ratings">Admin</a><% } %>
+        <a href="/logout">Logout</a>
       </span>
     <% } %>
   </nav>
@@ -50,24 +49,18 @@
 
     <% if (!activeCategory && sortedCategories.length > 0) { %>
       <!-- Grouped by category -->
-      <% if (stuntReelCount > 0) { %>
-        <div class="category-section">
-          <h2 class="category-heading">Demo Reels</h2>
-          <div class="skills-grid">
-            <a href="/stunt-reels/all<%= activeLocation ? '?location=' + encodeURIComponent(activeLocation) : '' %>" class="skill-card" style="border-color:#f0c040;">
-              <div class="skill-name">Stunt Reels</div>
-              <div class="skill-meta">
-                <span class="skill-category">Demo Reels</span>
-                <span class="skill-count"><%= stuntReelCount %> people</span>
-              </div>
-            </a>
-          </div>
-        </div>
-      <% } %>
       <% sortedCategories.forEach(cat => { %>
         <div class="category-section">
           <h2 class="category-heading"><%= cat %></h2>
           <div class="skills-grid">
+            <% if (cat === 'Stunt Skills' && stuntReelCount > 0) { %>
+              <a href="/stunt-reels/all<%= activeLocation ? '?location=' + encodeURIComponent(activeLocation) : '' %>" class="skill-card" style="border-color:#f0c040;">
+                <div class="skill-name">Stunt Reels</div>
+                <div class="skill-meta">
+                  <span class="skill-count"><%= stuntReelCount %> people</span>
+                </div>
+              </a>
+            <% } %>
             <% skillsByCategory[cat].forEach(skill => { %>
               <a href="/skill/<%= encodeURIComponent(skill.skill_name) %>/all<%= activeLocation ? '?location=' + encodeURIComponent(activeLocation) : '' %>" class="skill-card">
                 <div class="skill-name"><%= skill.skill_name %></div>
@@ -82,11 +75,10 @@
     <% } else { %>
       <!-- Single category or fallback flat grid -->
       <div class="skills-grid">
-        <% if (stuntReelCount > 0 && !activeCategory) { %>
+        <% if (stuntReelCount > 0 && (activeCategory === 'Stunt Skills' || !activeCategory)) { %>
           <a href="/stunt-reels/all<%= activeLocation ? '?location=' + encodeURIComponent(activeLocation) : '' %>" class="skill-card" style="border-color:#f0c040;">
             <div class="skill-name">Stunt Reels</div>
             <div class="skill-meta">
-              <span class="skill-category">Demo Reels</span>
               <span class="skill-count"><%= stuntReelCount %> people</span>
             </div>
           </a>
@@ -95,9 +87,6 @@
           <a href="/skill/<%= encodeURIComponent(skill.skill_name) %>/all<%= activeLocation ? '?location=' + encodeURIComponent(activeLocation) : '' %>" class="skill-card">
             <div class="skill-name"><%= skill.skill_name %></div>
             <div class="skill-meta">
-              <% if (!activeCategory) { %>
-                <span class="skill-category"><%= skill.category || 'Uncategorized' %></span>
-              <% } %>
               <span class="skill-count"><%= skill.person_count %> people</span>
             </div>
           </a>

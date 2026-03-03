@@ -11,11 +11,10 @@
     <a href="/skills" class="nav-brand">Skill Reel Rater</a>
     <% if (user) { %>
       <span class="nav-user">
-        <%= user.first_name %>
-        | <a href="/my-reels">My Reels</a>
-        | <a href="/feedback"><strong>Feedback</strong></a>
-        <% if (user.id === 33) { %> | <a href="/admin/ratings">Admin</a><% } %>
-        | <a href="/logout">Logout</a>
+        <a href="/my-reels">My Skill Reels</a>
+        <a href="/feedback"><strong>Feedback Requests<% if (feedbackCount > 0) { %><span class="nav-link-badge"><%= feedbackCount %></span><% } %></strong></a>
+        <% if (user.id === 33) { %><a href="/admin/ratings">Admin</a><% } %>
+        <a href="/logout">Logout</a>
       </span>
     <% } %>
   </nav>

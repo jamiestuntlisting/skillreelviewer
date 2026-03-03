@@ -28,11 +28,27 @@ a:hover {
   justify-content: space-between;
 }
 .nav-user {
-  font-size: 0.85rem;
-  color: #8b949e;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 .nav-user a {
   color: #58a6ff;
+  font-size: 1.1rem;
+}
+.nav-user a strong {
+  color: #f0f6fc;
+}
+.nav-link-badge {
+  background: #da3633;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+  vertical-align: super;
 }
 .nav-admin-badge {
   background: #1f6feb;
@@ -67,6 +83,55 @@ h1 {
 .subtitle {
   color: #8b949e;
   margin-bottom: 20px;
+}
+.subtitle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.subtitle-row .subtitle {
+  margin-bottom: 0;
+}
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.toggle-switch input {
+  display: none;
+}
+.toggle-slider {
+  width: 36px;
+  height: 20px;
+  background: #30363d;
+  border-radius: 10px;
+  position: relative;
+  transition: background 0.2s;
+}
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #8b949e;
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background: #238636;
+}
+.toggle-switch input:checked + .toggle-slider::after {
+  transform: translateX(16px);
+  background: #fff;
+}
+.toggle-label {
+  color: #8b949e;
+  font-size: 0.85rem;
 }
 
 .breadcrumb {
