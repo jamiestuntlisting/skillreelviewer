@@ -162,6 +162,55 @@ router.get('/ratings', async (req, res, next) => {
     const notSkillReelCount = sqlite.prepare('SELECT COUNT(*) as c FROM not_skill_reels').get().c;
     const noDemoCount = sqlite.prepare('SELECT COUNT(*) as c FROM no_demo_skill').get().c;
 
+    // === ENGAGEMENT TRACKING ===
+    // Daily activity (last 14 days)
+    const dailyLikes = sqlite.prepare(`
+      SELECT DATE(created_at) as day, COUNT(*) as count
+      FROM likes WHERE created_at >= datetime('now', '-14 days')
+      GROUP BY DATE(created_at) ORDER BY day ASC
+    `).all();
+    const dailyBests = sqlite.prepare(`
+      SELECT DATE(created_at) as day, COUNT(*) as count
+      FROM best_skill_reels WHERE created_at >= datetime('now', '-14 days')
+      GROUP BY DATE(created_at) ORDER BY day ASC
+    `).all();
+
+    // This week stats
+    const likesToday = sqlite.prepare(
+      "SELECT COUNT(*) as c FROM likes WHERE DATE(created_at) = DATE('now')"
+    ).get().c;
+    const likesThisWeek = sqlite.prepare(
+      "SELECT COUNT(*) as c FROM likes WHERE created_at >= datetime('now', '-7 days')"
+    ).get().c;
+    const bestsThisWeek = sqlite.prepare(
+      "SELECT COUNT(*) as c FROM best_skill_reels WHERE created_at >= datetime('now', '-7 days')"
+    ).get().c;
+    const activeRatersWeek = sqlite.prepare(
+      "SELECT COUNT(DISTINCT rater_id) as c FROM likes WHERE created_at >= datetime('now', '-7 days')"
+    ).get().c;
+
+    // Stunt reel engagement
+    const stuntLikes = sqlite.prepare(
+      "SELECT COUNT(*) as c FROM likes WHERE COALESCE(reel_type, 'skill') = 'stunt'"
+    ).get().c;
+    const stuntBests = sqlite.prepare(
+      "SELECT COUNT(*) as c FROM best_skill_reels WHERE COALESCE(reel_type, 'skill') = 'stunt'"
+    ).get().c;
+
+    // Feedback stats
+    const activeFeedbackRequests = sqlite.prepare(
+      "SELECT COUNT(*) as c FROM feedback_requests WHERE datetime(created_at, '+14 days') > datetime('now')"
+    ).get().c;
+    const totalFeedbackSubmissions = sqlite.prepare(
+      "SELECT COUNT(*) as c FROM feedback_submissions"
+    ).get().c;
+    const feedbackThisWeek = sqlite.prepare(
+      "SELECT COUNT(*) as c FROM feedback_submissions WHERE created_at >= datetime('now', '-7 days')"
+    ).get().c;
+
+    // Hidden reels count
+    const hiddenReelsCount = sqlite.prepare('SELECT COUNT(*) as c FROM hidden_reels').get().c;
+
     res.render('admin-ratings', {
       likes: enrichedLikes,
       filters: { rater, skill, performer, date },
@@ -181,6 +230,20 @@ router.get('/ratings', async (req, res, next) => {
         brokenCount,
         notSkillReelCount,
         noDemoCount,
+      },
+      engagement: {
+        dailyLikes,
+        dailyBests,
+        likesToday,
+        likesThisWeek,
+        bestsThisWeek,
+        activeRatersWeek,
+        stuntLikes,
+        stuntBests,
+        activeFeedbackRequests,
+        totalFeedbackSubmissions,
+        feedbackThisWeek,
+        hiddenReelsCount,
       },
     });
   } catch (err) {

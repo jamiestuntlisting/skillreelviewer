@@ -43,6 +43,82 @@
       </div>
     </div>
 
+    <!-- Engagement Tracking -->
+    <div class="analytics-section" style="margin-bottom:20px;">
+      <h3>Engagement This Week</h3>
+      <div class="analytics-grid" style="margin-bottom:16px;">
+        <div class="analytics-card">
+          <div class="analytics-value"><%= engagement.likesToday %></div>
+          <div class="analytics-label">Likes Today</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-value"><%= engagement.likesThisWeek %></div>
+          <div class="analytics-label">Likes This Week</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-value"><%= engagement.bestsThisWeek %></div>
+          <div class="analytics-label">Bests This Week</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-value"><%= engagement.activeRatersWeek %></div>
+          <div class="analytics-label">Active Raters</div>
+        </div>
+      </div>
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <div class="analytics-value"><%= engagement.stuntLikes %></div>
+          <div class="analytics-label">Stunt Reel Likes</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-value"><%= engagement.stuntBests %></div>
+          <div class="analytics-label">Stunt Reel Bests</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-value"><%= engagement.activeFeedbackRequests %></div>
+          <div class="analytics-label">Active Feedback Requests</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-value"><%= engagement.totalFeedbackSubmissions %></div>
+          <div class="analytics-label">Feedback Submitted</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-value"><%= engagement.feedbackThisWeek %></div>
+          <div class="analytics-label">Feedback This Week</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-value"><%= engagement.hiddenReelsCount %></div>
+          <div class="analytics-label">Hidden Reels</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily Activity Chart (14 days) -->
+    <div class="analytics-section" style="margin-bottom:20px;">
+      <h3>Daily Activity (Last 14 Days)</h3>
+      <div class="section-desc">Likes per day</div>
+      <%
+        const dailyMap = {};
+        engagement.dailyLikes.forEach(d => { dailyMap[d.day] = (dailyMap[d.day] || 0) + d.count; });
+        const days = [];
+        for (let i = 13; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const key = d.toISOString().split('T')[0];
+          days.push({ day: key, label: (d.getMonth()+1) + '/' + d.getDate(), count: dailyMap[key] || 0 });
+        }
+        const maxDayCount = Math.max(1, ...days.map(d => d.count));
+      %>
+      <div class="bar-chart" style="height:120px;">
+        <% days.forEach(d => { %>
+          <div class="bar-col">
+            <div class="bar-count"><%= d.count || '' %></div>
+            <div class="bar" style="height:<%= Math.max(2, (d.count / maxDayCount) * 100) %>%;"></div>
+            <div class="bar-label"><%= d.label %></div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;">
       <div class="analytics-table-card">
         <h3>Most Liked Performers</h3>
