@@ -12,6 +12,7 @@
     <% if (typeof user !== 'undefined' && user) { %>
       <span class="nav-user">
         <%= user.first_name %>
+        | <a href="/feed">Feed</a>
         <% if (user.id === 33) { %> | <a href="/admin/ratings">Admin</a><% } %>
         | <a href="/logout">Logout</a>
       </span>

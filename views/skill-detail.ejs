@@ -12,6 +12,7 @@
     <% if (typeof user !== 'undefined' && user) { %>
       <span class="nav-user">
         <%= user.first_name %>
+        | <a href="/feed">Feed</a>
         <% if (user.id === 33) { %> | <a href="/admin/ratings">Admin</a><% } %>
         | <a href="/logout">Logout</a>
       </span>
@@ -52,7 +53,9 @@
            data-skill-set-id="<%= person.skill_set_id %>"
            data-user-id="<%= person.userId %>"
            data-skill-name="<%= person.skill_name %>"
-           data-starred="<%= person.starred ? 'true' : 'false' %>">
+           data-liked="<%= person.liked ? 'true' : 'false' %>"
+           data-starred="<%= person.starred ? 'true' : 'false' %>"
+           data-best-remaining="<%= person.bestRemaining %>">
 
         <% if (person.skillEmbed && (person.skillEmbed.type === 'youtube' || person.skillEmbed.type === 'vimeo')) { %>
           <label class="mute-toggle corner-mute"><input type="checkbox" id="mute-checkbox"> Mute</label>
@@ -98,18 +101,20 @@
         <% } %>
 
         <div class="rating-section">
-          <h4>Rate this skill reel</h4>
           <div class="rating-buttons">
-            <% for (let i = 1; i <= 10; i++) { %>
-              <button class="rating-btn<%= person.rating === i ? ' active' : '' %>"
-                      data-value="<%= i %>"><%= i %></button>
-            <% } %>
-            <button class="rating-btn star-rating-btn<%= person.starred ? ' active' : '' %>"
-                    title="Best of the Best">&#9733;</button>
+            <button class="like-btn<%= person.liked ? ' active' : '' %>" title="Like this skill reel">
+              <span class="like-icon">&#128077;</span>
+              <span class="like-count"><%= person.likeCount || '' %></span>
+            </button>
+            <button class="best-btn<%= person.starred ? ' active' : '' %>" title="Best of All Time">
+              <span class="best-icon">&#9733;</span>
+              <span class="best-label">Best of All Time</span>
+              <span class="best-count"><%= person.bestCount || '' %></span>
+            </button>
           </div>
-          <% if (person.rating) { %>
-            <span class="rating-saved">Rated: <strong><%= person.rating %>/10</strong></span>
-          <% } %>
+          <div class="best-remaining">
+            <span class="best-remaining-count"><%= person.bestRemaining %></span> Best of All Time vote<%= person.bestRemaining !== 1 ? 's' : '' %> remaining this week
+          </div>
           <span class="rating-status" style="display:none;"></span>
         </div>
 

@@ -10,87 +10,38 @@
   <nav class="navbar">
     <a href="/skills" class="nav-brand">Skill Reel Rater</a>
     <span class="nav-user">
-      <span class="nav-admin-badge">Admin</span>
-      <%= user.first_name %>
-      | <a href="/logout">Logout</a>
+      <%= user.first_name %> | <a href="/admin/ratings">Dashboard</a> | <a href="/logout">Logout</a>
     </span>
   </nav>
   <main class="container">
     <h1>Rater Analytics</h1>
-    <p class="subtitle"><%= raters.length %> raters</p>
+    <p class="subtitle"><%= raters.length %> rater<%= raters.length !== 1 ? 's' : '' %></p>
 
-    <% raters.forEach(rater => { %>
-      <div class="rater-card">
-        <div class="rater-header">
-          <div>
-            <h3 class="rater-name"><%= rater.name %></h3>
-            <% if (rater.email) { %>
-              <small class="text-muted"><%= rater.email %></small>
-            <% } %>
+    <div class="raters-grid">
+      <% raters.forEach(r => { %>
+        <div class="rater-card">
+          <h3><%= r.name %></h3>
+          <% if (r.email) { %><p class="rater-email"><%= r.email %></p><% } %>
+          <div class="rater-stats">
+            <span>&#128077; <strong><%= r.totalLikes %></strong> likes</span>
+            <span>&#9733; <strong><%= r.totalBests %></strong> bests</span>
+            <span><strong><%= r.skillsLikedCount %></strong> skills</span>
+            <span><strong><%= r.totalFlags %></strong> flags</span>
           </div>
-          <div class="rater-summary">
-            <span class="rater-stat"><strong><%= rater.totalRatings %></strong> ratings</span>
-            <span class="rater-stat">avg <strong><%= rater.avg %></strong></span>
-            <span class="rater-stat"><strong><%= rater.skillsRatedCount %></strong> skills</span>
-            <% if (rater.totalFlags > 0) { %>
-              <span class="rater-stat"><strong><%= rater.totalFlags %></strong> flags</span>
-            <% } %>
-          </div>
-        </div>
-
-        <% if (rater.totalRatings > 0) { %>
-          <!-- Mini distribution chart -->
-          <div class="rater-details">
-            <div class="mini-chart-section">
-              <h4>Rating Distribution</h4>
-              <div class="mini-bar-chart">
-                <% const raterMax = Math.max(...Object.values(rater.distribution), 1); %>
-                <% for (let i = 1; i <= 10; i++) { %>
-                  <div class="mini-bar-col">
-                    <div class="mini-bar-count"><%= rater.distribution[i] || '' %></div>
-                    <div class="mini-bar" style="height: <%= (rater.distribution[i] / raterMax) * 60 %>px;"></div>
-                    <div class="mini-bar-label"><%= i %></div>
-                  </div>
-                <% } %>
-              </div>
-            </div>
-
-            <div class="mini-chart-section">
-              <h4>Derived Levels Given</h4>
-              <div class="level-breakdown">
-                <% Object.entries(rater.levelCounts).forEach(([level, count]) => { %>
-                  <% if (count > 0) { %>
-                    <span class="level-stat">
-                      <span class="level-badge level-<%= level.toLowerCase() %>"><%= level %></span>
-                      <strong><%= count %></strong>
-                    </span>
-                  <% } %>
-                <% }) %>
-              </div>
-            </div>
-          </div>
-
-          <% if (rater.totalFlags > 0) { %>
-            <div class="flags-detail">
-              <% if (rater.flags.broken_link > 0) { %><span class="flag-chip flag-broken"><%= rater.flags.broken_link %> Broken</span><% } %>
-              <% if (rater.flags.not_skill_reel > 0) { %><span class="flag-chip flag-not-reel"><%= rater.flags.not_skill_reel %> Not Reel</span><% } %>
-              <% if (rater.flags.no_demo > 0) { %><span class="flag-chip flag-no-demo"><%= rater.flags.no_demo %> No Demo</span><% } %>
-              <% if (rater.flags.best > 0) { %><span class="flag-chip flag-best"><%= rater.flags.best %> Best &#9733;</span><% } %>
+          <% if (r.totalFlags > 0) { %>
+            <div class="rater-flags">
+              <% if (r.flags.broken_link) { %><span class="flag-chip">Broken: <%= r.flags.broken_link %></span><% } %>
+              <% if (r.flags.not_skill_reel) { %><span class="flag-chip">Not Reel: <%= r.flags.not_skill_reel %></span><% } %>
+              <% if (r.flags.no_demo) { %><span class="flag-chip">No Demo: <%= r.flags.no_demo %></span><% } %>
             </div>
           <% } %>
-        <% } %>
-
-        <% if (rater.lastActivity) { %>
-          <div class="rater-last-active">Last active: <%= rater.lastActivity %></div>
-        <% } %>
-
-        <a href="/admin/ratings?rater=<%= rater.id %>" class="view-ratings-link">View all ratings &rarr;</a>
-      </div>
-    <% }) %>
-
-    <% if (raters.length === 0) { %>
-      <p>No raters yet.</p>
-    <% } %>
+          <% if (r.lastActivity) { %>
+            <p class="rater-last-active">Last active: <%= r.lastActivity.substring(0, 16).replace('T', ' ') %></p>
+          <% } %>
+          <p><a href="/admin/ratings?rater=<%= r.id %>">View likes &rarr;</a></p>
+        </div>
+      <% }) %>
+    </div>
   </main>
 </body>
 </html>

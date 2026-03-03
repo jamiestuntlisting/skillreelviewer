@@ -12,6 +12,7 @@
     <% if (user) { %>
       <span class="nav-user">
         <%= user.first_name %>
+        | <a href="/feed">Feed</a>
         <% if (user.id === 33) { %> | <a href="/admin/ratings">Admin</a><% } %>
         | <a href="/logout">Logout</a>
       </span>
@@ -60,8 +61,8 @@
                 <span>&#9654; Skill Reel</span>
               </div>
             <% } %>
-            <% if (person.rating) { %>
-              <span class="rating-saved">Rated: <strong><%= person.rating %>/10</strong></span>
+            <% if (person.liked) { %>
+              <span class="like-indicator">&#128077; Liked</span>
             <% } %>
           </a>
         <% } else if (person.isPaid) { %>
@@ -88,8 +89,8 @@
                 <span>&#9654; Skill Reel</span>
               </div>
             <% } %>
-            <% if (person.rating) { %>
-              <span class="rating-saved">Rated: <strong><%= person.rating %>/10</strong></span>
+            <% if (person.liked) { %>
+              <span class="like-indicator">&#128077; Liked</span>
             <% } %>
           </div>
         <% } else { %>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feed - Skill Reel Rater</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/skills" class="nav-brand">Skill Reel Rater</a>
+    <% if (typeof user !== 'undefined' && user) { %>
+      <span class="nav-user">
+        <%= user.first_name %>
+        <% if (user.id === 33) { %> | <a href="/admin/ratings">Admin</a><% } %>
+        | <a href="/logout">Logout</a>
+      </span>
+    <% } %>
+  </nav>
+
+  <div class="feed-container">
+    <% reels.forEach(reel => { %>
+      <div class="feed-card"
+           data-skill-set-id="<%= reel.skill_set_id %>"
+           data-user-id="<%= reel.userId %>"
+           data-skill-name="<%= reel.skill_name %>"
+           data-liked="<%= reel.liked ? 'true' : 'false' %>"
+           data-starred="<%= reel.starred ? 'true' : 'false' %>"
+           data-best-remaining="<%= bestRemaining %>">
+
+        <% if (reel.skillEmbed && (reel.skillEmbed.type === 'youtube' || reel.skillEmbed.type === 'vimeo')) { %>
+          <div class="feed-video">
+            <iframe src="<%= reel.skillEmbed.embedUrl %>" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen loading="lazy"></iframe>
+          </div>
+        <% } %>
+
+        <div class="feed-overlay">
+          <div class="feed-info">
+            <div class="feed-person">
+              <% if (reel.display_image) { %>
+                <img src="<%= reel.display_image %>" alt="<%= reel.first_name %>" class="feed-avatar">
+              <% } else { %>
+                <div class="feed-avatar placeholder"><%= reel.first_name ? reel.first_name[0] : '?' %></div>
+              <% } %>
+              <div>
+                <div class="feed-name"><%= reel.first_name %> <%= reel.last_name %></div>
+                <div class="feed-skill"><%= reel.skill_name %></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="feed-actions">
+            <button class="like-btn<%= reel.liked ? ' active' : '' %>" title="Like">
+              <span class="like-icon">&#128077;</span>
+              <span class="like-count"><%= reel.likeCount || '' %></span>
+            </button>
+            <button class="best-btn<%= reel.starred ? ' active' : '' %>" title="Best of All Time">
+              <span class="best-icon">&#9733;</span>
+              <span class="best-count"><%= reel.bestCount || '' %></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+
+    <% if (reels.length === 0) { %>
+      <div class="feed-empty">
+        <p>No skill reels yet.</p>
+      </div>
+    <% } %>
+
+    <% if (hasMore) { %>
+      <div class="feed-load-more">
+        <a href="/feed?page=<%= page + 1 %>" class="nav-btn">Load more</a>
+      </div>
+    <% } %>
+  </div>
+
+  <script src="/js/ratings.js"></script>
+</body>
+</html>

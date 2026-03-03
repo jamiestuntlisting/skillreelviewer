@@ -142,11 +142,15 @@ router.get('/skill/:skillName/all', async (req, res, next) => {
       });
     await Promise.all(vimeoPromises);
 
-    // Get current rater's ratings for all performers
+    // Get current rater's likes
     const raterId = req.session.user ? req.session.user.id : null;
-    const ratingRows = sqlite.prepare('SELECT skill_set_id, rating FROM ratings WHERE rater_id = ?').all(raterId);
-    const ratingMap = {};
-    ratingRows.forEach(r => { ratingMap[r.skill_set_id] = r.rating; });
+    const likedRows = sqlite.prepare('SELECT skill_set_id FROM likes WHERE rater_id = ?').all(raterId);
+    const likedSet = new Set(likedRows.map(r => r.skill_set_id));
+
+    // Get like counts for all skill_set_ids
+    const allLikeCounts = sqlite.prepare('SELECT skill_set_id, COUNT(*) AS count FROM likes GROUP BY skill_set_id').all();
+    const likeCountMap = {};
+    allLikeCounts.forEach(r => { likeCountMap[r.skill_set_id] = r.count; });
 
     // Track carousel index — only count paid users with YouTube/Vimeo embeds
     // (must match the carousel route's filtering exactly)
@@ -157,7 +161,8 @@ router.get('/skill/:skillName/all', async (req, res, next) => {
         (p.skillEmbed.type === 'youtube' || p.skillEmbed.type === 'vimeo');
       const result = {
         ...p,
-        rating: ratingMap[p.skill_set_id] || null,
+        liked: likedSet.has(p.skill_set_id),
+        likeCount: likeCountMap[p.skill_set_id] || 0,
         paidIndex: inCarousel ? carouselIdx : null,
       };
       if (inCarousel) carouselIdx++;
@@ -230,20 +235,32 @@ router.get('/skill/:skillName', async (req, res, next) => {
   }
 
   const raterId = req.session.user ? req.session.user.id : null;
-  const ratingRow = sqlite
-    .prepare('SELECT rating FROM ratings WHERE skill_set_id = ? AND rater_id = ?')
+  const likeRow = sqlite
+    .prepare('SELECT id FROM likes WHERE skill_set_id = ? AND rater_id = ?')
     .get(person.skill_set_id, raterId);
+  const likeCount = sqlite
+    .prepare('SELECT COUNT(*) AS count FROM likes WHERE skill_set_id = ?')
+    .get(person.skill_set_id).count;
 
   const bestRow = sqlite
-    .prepare('SELECT id FROM best_skill_reels WHERE skill_set_id = ?')
-    .get(person.skill_set_id);
+    .prepare('SELECT id FROM best_skill_reels WHERE skill_set_id = ? AND rater_id = ?')
+    .get(person.skill_set_id, raterId);
+  const bestCount = sqlite
+    .prepare('SELECT COUNT(*) AS count FROM best_skill_reels WHERE skill_set_id = ?')
+    .get(person.skill_set_id).count;
+  const bestRemaining = 2 - sqlite
+    .prepare("SELECT COUNT(*) AS count FROM best_skill_reels WHERE rater_id = ? AND created_at >= datetime('now', '-7 days')")
+    .get(raterId).count;
 
   const enriched = {
     ...person,
     display_image: resolveImageUrl(person.display_image),
     skillEmbed: getEmbedInfo(person.skill_url),
-    rating: ratingRow ? ratingRow.rating : null,
+    liked: !!likeRow,
+    likeCount,
     starred: !!bestRow,
+    bestCount,
+    bestRemaining,
   };
 
   res.render('skill-detail', {
@@ -254,6 +271,93 @@ router.get('/skill/:skillName', async (req, res, next) => {
     totalPeople: people.length,
     location,
   });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Feed page — most recently added skill reels, vertical scroll
+router.get('/feed', async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 0;
+    const limit = 20;
+    const offset = page * limit;
+
+    const [reels] = await mysql.query(
+      `SELECT
+         ss.id AS skill_set_id,
+         ss.userId,
+         ss.skill_name,
+         ss.level,
+         ss.skill_url,
+         ss.created_at AS reel_created_at,
+         u.first_name,
+         u.last_name,
+         u.display_image
+       FROM skill_sets ss
+       JOIN user u ON ss.userId = u.id
+       WHERE ss.skill_url IS NOT NULL
+         AND TRIM(ss.skill_url) != ''
+         AND TRIM(ss.skill_url) != ' '
+         AND (ss.skill_url LIKE '%youtube.com%' OR ss.skill_url LIKE '%youtu.be%' OR ss.skill_url LIKE '%vimeo.com%')
+         AND u.subscription_type IN ('standard_monthly', 'standard_yearly', 'plus_monthly', 'plus_yearly')
+         AND u.is_subscription_active = 1
+       ORDER BY ss.id DESC
+       LIMIT ? OFFSET ?`,
+      [limit + 1, offset]  // fetch one extra to know if there's more
+    );
+
+    const hasMore = reels.length > limit;
+    const pageReels = reels.slice(0, limit);
+
+    const { brokenIds, notSkillReelIds, noDemoSkillIds } = getExcludedIds();
+
+    const feedItems = pageReels
+      .filter(p =>
+        !brokenIds.has(p.skill_set_id) &&
+        !notSkillReelIds.has(p.skill_set_id) &&
+        !noDemoSkillIds.has(p.skill_set_id)
+      )
+      .map(p => ({
+        ...p,
+        display_image: resolveImageUrl(p.display_image),
+        skillEmbed: getEmbedInfo(p.skill_url),
+      }));
+
+    // Get current rater's likes and best status
+    const raterId = req.session.user ? req.session.user.id : null;
+    const likedRows = sqlite.prepare('SELECT skill_set_id FROM likes WHERE rater_id = ?').all(raterId);
+    const likedSet = new Set(likedRows.map(r => r.skill_set_id));
+
+    const bestRows = sqlite.prepare('SELECT skill_set_id FROM best_skill_reels WHERE rater_id = ?').all(raterId);
+    const bestSet = new Set(bestRows.map(r => r.skill_set_id));
+
+    const allLikeCounts = sqlite.prepare('SELECT skill_set_id, COUNT(*) AS count FROM likes GROUP BY skill_set_id').all();
+    const likeCountMap = {};
+    allLikeCounts.forEach(r => { likeCountMap[r.skill_set_id] = r.count; });
+
+    const allBestCounts = sqlite.prepare('SELECT skill_set_id, COUNT(*) AS count FROM best_skill_reels GROUP BY skill_set_id').all();
+    const bestCountMap = {};
+    allBestCounts.forEach(r => { bestCountMap[r.skill_set_id] = r.count; });
+
+    const bestRemaining = 2 - sqlite
+      .prepare("SELECT COUNT(*) AS count FROM best_skill_reels WHERE rater_id = ? AND created_at >= datetime('now', '-7 days')")
+      .get(raterId).count;
+
+    const enrichedFeed = feedItems.map(p => ({
+      ...p,
+      liked: likedSet.has(p.skill_set_id),
+      likeCount: likeCountMap[p.skill_set_id] || 0,
+      starred: bestSet.has(p.skill_set_id),
+      bestCount: bestCountMap[p.skill_set_id] || 0,
+    }));
+
+    res.render('feed', {
+      reels: enrichedFeed,
+      page,
+      hasMore,
+      bestRemaining,
+    });
   } catch (err) {
     next(err);
   }
