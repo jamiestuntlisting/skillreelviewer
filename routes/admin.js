@@ -195,9 +195,9 @@ router.get('/raters', async (req, res, next) => {
     const allBests = sqlite.prepare('SELECT skill_set_id, user_id, skill_name, rater_id, created_at FROM best_skill_reels').all();
 
     const allFlags = [
-      ...sqlite.prepare('SELECT rater_id, skill_name, "broken_link" as type, created_at FROM broken_links').all(),
-      ...sqlite.prepare('SELECT rater_id, skill_name, "not_skill_reel" as type, created_at FROM not_skill_reels').all(),
-      ...sqlite.prepare('SELECT rater_id, skill_name, "no_demo" as type, created_at FROM no_demo_skill').all(),
+      ...sqlite.prepare("SELECT rater_id, skill_name, 'broken_link' as type, created_at FROM broken_links").all(),
+      ...sqlite.prepare("SELECT rater_id, skill_name, 'not_skill_reel' as type, created_at FROM not_skill_reels").all(),
+      ...sqlite.prepare("SELECT rater_id, skill_name, 'no_demo' as type, created_at FROM no_demo_skill").all(),
     ];
 
     const raterIds = [...new Set([

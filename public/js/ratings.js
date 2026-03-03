@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => burst.remove(), 700);
           }
 
-          showStatus(card, data.starred ? 'Best of All Time!' : 'Removed');
+          showStatus(card, data.starred ? 'Best of the Best!' : 'Removed');
         }
       } catch (err) {
         console.error('Best toggle failed:', err);

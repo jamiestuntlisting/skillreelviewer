@@ -76,7 +76,7 @@ router.post('/best', (req, res) => {
     const weekCount = getBestThisWeek.get(rater_id).count;
     if (weekCount >= 2) {
       return res.status(429).json({
-        error: 'You have used your 2 Best of All Time votes this week',
+        error: 'You have used your 2 Best of the Best votes this week',
         remaining: 0,
       });
     }

@@ -58,7 +58,7 @@
            data-best-remaining="<%= person.bestRemaining %>">
 
         <% if (person.skillEmbed && (person.skillEmbed.type === 'youtube' || person.skillEmbed.type === 'vimeo')) { %>
-          <label class="mute-toggle corner-mute"><input type="checkbox" id="mute-checkbox"> Mute</label>
+          <label class="mute-toggle corner-mute"><input type="checkbox" id="mute-checkbox"> Mute skill reel audio</label>
         <% } %>
 
         <div class="person-header">
@@ -106,14 +106,14 @@
               <span class="like-icon">&#128077;</span>
               <span class="like-count"><%= person.likeCount || '' %></span>
             </button>
-            <button class="best-btn<%= person.starred ? ' active' : '' %>" title="Best of All Time">
+            <button class="best-btn<%= person.starred ? ' active' : '' %>" title="Best of the Best">
               <span class="best-icon">&#9733;</span>
-              <span class="best-label">Best of All Time</span>
+              <span class="best-label">Best of the Best</span>
               <span class="best-count"><%= person.bestCount || '' %></span>
             </button>
           </div>
           <div class="best-remaining">
-            <span class="best-remaining-count"><%= person.bestRemaining %></span> Best of All Time vote<%= person.bestRemaining !== 1 ? 's' : '' %> remaining this week
+            <span class="best-remaining-count"><%= person.bestRemaining %></span> left this week
           </div>
           <span class="rating-status" style="display:none;"></span>
         </div>

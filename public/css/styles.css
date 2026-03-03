@@ -352,7 +352,7 @@ h1 {
   display: flex;
   gap: 12px;
   margin-bottom: 8px;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
 }
 .rating-status {
