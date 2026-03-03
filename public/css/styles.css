@@ -140,6 +140,17 @@ h1 {
 }
 
 /* Skills Grid */
+.category-section {
+  margin-bottom: 24px;
+}
+.category-heading {
+  font-size: 1.15rem;
+  color: #8b949e;
+  border-bottom: 1px solid #30363d;
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
 .skills-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

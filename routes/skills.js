@@ -88,6 +88,22 @@ router.get('/skills', async (req, res, next) => {
       ? rows.filter(r => r.category === activeCategory)
       : rows;
 
+    // Group skills by category for the "All" view
+    const skillsByCategory = {};
+    if (!activeCategory) {
+      rows.forEach(r => {
+        const cat = r.category || 'Uncategorized';
+        if (!skillsByCategory[cat]) skillsByCategory[cat] = [];
+        skillsByCategory[cat].push(r);
+      });
+    }
+    // Sort categories by total person count (most popular first)
+    const sortedCategories = Object.keys(skillsByCategory).sort((a, b) => {
+      const aTotal = skillsByCategory[a].reduce((sum, s) => sum + s.person_count, 0);
+      const bTotal = skillsByCategory[b].reduce((sum, s) => sum + s.person_count, 0);
+      return bTotal - aTotal;
+    });
+
     res.render('skills-list', {
       skills: filtered,
       categories,
@@ -95,6 +111,8 @@ router.get('/skills', async (req, res, next) => {
       locations,
       activeLocation,
       stuntReelCount,
+      skillsByCategory,
+      sortedCategories,
     });
   } catch (err) {
     next(err);
