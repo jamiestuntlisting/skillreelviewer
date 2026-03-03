@@ -305,12 +305,17 @@ h1 {
 .video-section, .reels-section {
   margin-bottom: 12px;
 }
+.video-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
 .video-section h4, .reels-section h4 {
   font-size: 0.82rem;
   color: #8b949e;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
 }
 .video-container {
   position: relative;
@@ -352,8 +357,11 @@ h1 {
   display: flex;
   gap: 12px;
   margin-bottom: 8px;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+}
+.rating-buttons.best-row {
+  margin-top: 4px;
 }
 .rating-status {
   font-size: 0.82rem;
@@ -387,6 +395,7 @@ h1 {
   color: #fff;
 }
 .like-icon { font-size: 1.6rem; }
+.like-label { font-size: 0.95rem; font-weight: 600; }
 .like-count { font-size: 1.05rem; font-weight: 600; }
 .like-btn.like-pop { animation: likePop 0.4s ease; }
 @keyframes likePop {

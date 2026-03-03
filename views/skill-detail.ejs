@@ -81,7 +81,12 @@
 
         <% if (person.skillEmbed) { %>
           <div class="video-section">
-            <h4>Skill Reel</h4>
+            <div class="video-header">
+              <h4>Skill Reel</h4>
+              <button class="share-btn" title="Share this skill reel">
+                <span class="share-icon">&#128279;</span> Share
+              </button>
+            </div>
             <% if (person.skillEmbed.type === 'youtube' || person.skillEmbed.type === 'vimeo') { %>
               <div class="video-container large">
                 <iframe id="skill-video" data-base-url="<%= person.skillEmbed.embedUrl %>" src="<%= person.skillEmbed.embedUrl %>" frameborder="0"
@@ -102,17 +107,17 @@
 
         <div class="rating-section">
           <div class="rating-buttons">
-            <button class="like-btn<%= person.liked ? ' active' : '' %>" title="Like this skill reel">
+            <button class="like-btn<%= person.liked ? ' active' : '' %>" title="I recommend this person for this skill">
               <span class="like-icon">&#128077;</span>
+              <span class="like-label">I recommend this person for this skill</span>
               <span class="like-count"><%= person.likeCount || '' %></span>
             </button>
+          </div>
+          <div class="rating-buttons best-row">
             <button class="best-btn<%= person.starred ? ' active' : '' %>" title="Best of the Best">
               <span class="best-icon">&#9733;</span>
               <span class="best-label">Best of the Best</span>
               <span class="best-count"><%= person.bestCount || '' %></span>
-            </button>
-            <button class="share-btn" title="Share this skill reel">
-              <span class="share-icon">&#128279;</span> Share
             </button>
           </div>
           <div class="best-remaining">

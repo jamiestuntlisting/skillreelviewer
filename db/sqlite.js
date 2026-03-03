@@ -95,4 +95,41 @@ db.exec(`
   }
 });
 
+// Hidden reels — performer hides their reel from all views
+db.exec(`
+  CREATE TABLE IF NOT EXISTS hidden_reels (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    skill_set_id INTEGER NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  )
+`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_hidden_reels_user_id ON hidden_reels(user_id)`);
+
+// Feedback requests — performer opens reel for 2-week feedback window
+db.exec(`
+  CREATE TABLE IF NOT EXISTS feedback_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    skill_set_id INTEGER NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  )
+`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_feedback_requests_user_id ON feedback_requests(user_id)`);
+
+// Feedback submissions — feedback left by any logged-in user
+db.exec(`
+  CREATE TABLE IF NOT EXISTS feedback_submissions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    feedback_request_id INTEGER NOT NULL,
+    skill_set_id INTEGER NOT NULL,
+    performer_user_id INTEGER NOT NULL,
+    reviewer_user_id INTEGER NOT NULL,
+    feedback_text TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  )
+`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_feedback_subs_request ON feedback_submissions(feedback_request_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_feedback_subs_reviewer ON feedback_submissions(reviewer_user_id)`);
+
 module.exports = db;
