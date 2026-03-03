@@ -49,6 +49,15 @@
     </div>
 
     <div class="skills-grid">
+      <% if (stuntReelCount > 0) { %>
+        <a href="/stunt-reels/all<%= activeLocation ? '?location=' + encodeURIComponent(activeLocation) : '' %>" class="skill-card" style="border-color:#f0c040;">
+          <div class="skill-name">Stunt Reels</div>
+          <div class="skill-meta">
+            <span class="skill-category">Demo Reels</span>
+            <span class="skill-count"><%= stuntReelCount %> people</span>
+          </div>
+        </a>
+      <% } %>
       <% skills.forEach(skill => { %>
         <a href="/skill/<%= encodeURIComponent(skill.skill_name) %>/all<%= activeLocation ? '?location=' + encodeURIComponent(activeLocation) : '' %>" class="skill-card">
           <div class="skill-name"><%= skill.skill_name %></div>

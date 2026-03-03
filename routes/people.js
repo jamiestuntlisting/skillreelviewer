@@ -87,18 +87,18 @@ function getEmbedInfo(url) {
   return { type: 'link', originalUrl: url, thumbnail: null };
 }
 
-function getExcludedIds() {
+function getExcludedIds(reelType = 'skill') {
   const brokenIds = new Set(
-    sqlite.prepare('SELECT skill_set_id FROM broken_links').all().map(r => r.skill_set_id)
+    sqlite.prepare("SELECT skill_set_id FROM broken_links WHERE COALESCE(reel_type, 'skill') = ?").all(reelType).map(r => r.skill_set_id)
   );
   const notSkillReelIds = new Set(
-    sqlite.prepare('SELECT skill_set_id FROM not_skill_reels').all().map(r => r.skill_set_id)
+    sqlite.prepare("SELECT skill_set_id FROM not_skill_reels WHERE COALESCE(reel_type, 'skill') = ?").all(reelType).map(r => r.skill_set_id)
   );
   const noDemoSkillIds = new Set(
-    sqlite.prepare('SELECT skill_set_id FROM no_demo_skill').all().map(r => r.skill_set_id)
+    sqlite.prepare("SELECT skill_set_id FROM no_demo_skill WHERE COALESCE(reel_type, 'skill') = ?").all(reelType).map(r => r.skill_set_id)
   );
   const hiddenReelIds = new Set(
-    sqlite.prepare('SELECT skill_set_id FROM hidden_reels').all().map(r => r.skill_set_id)
+    sqlite.prepare("SELECT skill_set_id FROM hidden_reels WHERE COALESCE(reel_type, 'skill') = ?").all(reelType).map(r => r.skill_set_id)
   );
   return { brokenIds, notSkillReelIds, noDemoSkillIds, hiddenReelIds };
 }
@@ -405,6 +405,213 @@ router.get('/feed', async (req, res, next) => {
       page,
       hasMore,
       bestRemaining,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ===== STUNT REELS =====
+
+// All performers with stunt reels
+router.get('/stunt-reels/all', async (req, res, next) => {
+  try {
+    const location = req.query.location || '';
+    const locFilter = locationFilter(location);
+
+    const [allReels] = await mysql.query(
+      `SELECT
+         sr.id AS stunt_reel_id,
+         sr.userId,
+         sr.title,
+         sr.reel_url,
+         sr.thumb_url,
+         u.first_name,
+         u.last_name,
+         u.display_image,
+         u.subscription_type,
+         u.is_subscription_active
+       FROM stunt_reels sr
+       JOIN user u ON sr.userId = u.id
+       WHERE sr.reel_url IS NOT NULL
+         AND TRIM(sr.reel_url) != ''
+         ${locFilter.clause}
+       ORDER BY u.last_name ASC, u.first_name ASC`,
+      [...locFilter.params]
+    );
+
+    const { brokenIds, notSkillReelIds, noDemoSkillIds, hiddenReelIds } = getExcludedIds('stunt');
+
+    const reels = allReels
+      .filter(r =>
+        !brokenIds.has(r.stunt_reel_id) &&
+        !notSkillReelIds.has(r.stunt_reel_id) &&
+        !noDemoSkillIds.has(r.stunt_reel_id) &&
+        !hiddenReelIds.has(r.stunt_reel_id)
+      )
+      .map(r => {
+        const isPaid = ['standard_monthly', 'standard_yearly', 'plus_monthly', 'plus_yearly']
+          .includes(r.subscription_type) && r.is_subscription_active === 1;
+        const embed = getEmbedInfo(r.reel_url);
+        // Use stored thumb_url if available
+        if (embed && r.thumb_url && r.thumb_url.trim()) {
+          embed.thumbnail = r.thumb_url;
+        }
+        return {
+          ...r,
+          skill_set_id: r.stunt_reel_id, // alias for template compatibility
+          display_image: resolveImageUrl(r.display_image),
+          isPaid,
+          skillEmbed: embed,
+        };
+      });
+
+    // Fetch Vimeo thumbnails for reels without stored thumbs
+    const thumbPromises = reels
+      .filter(r => r.skillEmbed && r.skillEmbed.type === 'vimeo' && !r.skillEmbed.thumbnail)
+      .map(async r => {
+        r.skillEmbed.thumbnail = await fetchVimeoThumbnail(r.skillEmbed.videoId);
+      });
+    await Promise.all(thumbPromises);
+
+    // Carousel index — only paid users with embeddable URLs
+    let carouselIdx = 0;
+    const enrichedReels = reels.map(r => {
+      const inCarousel = r.isPaid &&
+        r.skillEmbed &&
+        (r.skillEmbed.type === 'youtube' || r.skillEmbed.type === 'vimeo' || r.skillEmbed.type === 'instagram');
+      const result = {
+        ...r,
+        paidIndex: inCarousel ? carouselIdx : null,
+      };
+      if (inCarousel) carouselIdx++;
+      return result;
+    });
+
+    // Get likes for current rater
+    const raterId = req.session.user ? req.session.user.id : null;
+    const likedRows = sqlite.prepare("SELECT skill_set_id FROM likes WHERE rater_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'").all(raterId);
+    const likedSet = new Set(likedRows.map(r => r.skill_set_id));
+
+    enrichedReels.forEach(r => { r.liked = likedSet.has(r.stunt_reel_id); });
+
+    res.render('stunt-reels-all', {
+      reels: enrichedReels,
+      paidCount: enrichedReels.filter(r => r.isPaid).length,
+      freeCount: enrichedReels.filter(r => !r.isPaid).length,
+      location,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Stunt reels carousel / rating page — PAID USERS ONLY
+router.get('/stunt-reels', async (req, res, next) => {
+  try {
+    const shareId = req.query.id ? parseInt(req.query.id) : null;
+    const idx = parseInt(req.query.idx) || 0;
+    const location = req.query.location || '';
+    const locFilter = locationFilter(location);
+
+    const [allReels] = await mysql.query(
+      `SELECT
+         sr.id AS stunt_reel_id,
+         sr.userId,
+         sr.title,
+         sr.reel_url,
+         sr.thumb_url,
+         u.first_name,
+         u.last_name,
+         u.display_image
+       FROM stunt_reels sr
+       JOIN user u ON sr.userId = u.id
+       WHERE sr.reel_url IS NOT NULL
+         AND TRIM(sr.reel_url) != ''
+         AND (sr.reel_url LIKE '%youtube.com%' OR sr.reel_url LIKE '%youtu.be%' OR sr.reel_url LIKE '%vimeo.com%' OR sr.reel_url LIKE '%instagram.com%')
+         AND u.subscription_type IN ('standard_monthly', 'standard_yearly', 'plus_monthly', 'plus_yearly')
+         AND u.is_subscription_active = 1
+         ${locFilter.clause}
+       ORDER BY u.last_name ASC, u.first_name ASC`,
+      [...locFilter.params]
+    );
+
+    const { brokenIds, notSkillReelIds, noDemoSkillIds, hiddenReelIds } = getExcludedIds('stunt');
+    const reels = allReels.filter(r =>
+      !brokenIds.has(r.stunt_reel_id) &&
+      !notSkillReelIds.has(r.stunt_reel_id) &&
+      !noDemoSkillIds.has(r.stunt_reel_id) &&
+      !hiddenReelIds.has(r.stunt_reel_id)
+    );
+
+    const total = reels.length;
+
+    let currentIdx;
+    if (shareId) {
+      const foundIdx = reels.findIndex(r => r.stunt_reel_id === shareId);
+      currentIdx = foundIdx >= 0 ? foundIdx : 0;
+    } else {
+      currentIdx = Math.max(0, Math.min(idx, reels.length - 1));
+    }
+    const reel = reels[currentIdx];
+
+    if (!reel) {
+      return res.render('skill-detail', {
+        skillName: 'Stunt Reels', person: null, total, currentIdx: 0, totalPeople: 0, location,
+        reelType: 'stunt',
+      });
+    }
+
+    const raterId = req.session.user ? req.session.user.id : null;
+    const likeRow = sqlite
+      .prepare("SELECT id FROM likes WHERE skill_set_id = ? AND rater_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'")
+      .get(reel.stunt_reel_id, raterId);
+    const likeCount = sqlite
+      .prepare("SELECT COUNT(*) AS count FROM likes WHERE skill_set_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'")
+      .get(reel.stunt_reel_id).count;
+
+    const bestRow = sqlite
+      .prepare("SELECT id FROM best_skill_reels WHERE skill_set_id = ? AND rater_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'")
+      .get(reel.stunt_reel_id, raterId);
+    const bestCount = sqlite
+      .prepare("SELECT COUNT(*) AS count FROM best_skill_reels WHERE skill_set_id = ? AND COALESCE(reel_type, 'skill') = 'stunt'")
+      .get(reel.stunt_reel_id).count;
+    const bestRemaining = 2 - sqlite
+      .prepare("SELECT COUNT(*) AS count FROM best_skill_reels WHERE rater_id = ? AND created_at >= datetime('now', '-7 days')")
+      .get(raterId).count;
+
+    const embed = getEmbedInfo(reel.reel_url);
+    if (embed && reel.thumb_url && reel.thumb_url.trim()) {
+      embed.thumbnail = reel.thumb_url;
+    }
+
+    const enriched = {
+      skill_set_id: reel.stunt_reel_id,
+      userId: reel.userId,
+      skill_name: reel.title || 'Stunt Reel',
+      level: null,
+      category: 'Demo Reels',
+      description: reel.title || null,
+      skill_url: reel.reel_url,
+      first_name: reel.first_name,
+      last_name: reel.last_name,
+      display_image: resolveImageUrl(reel.display_image),
+      skillEmbed: embed,
+      liked: !!likeRow,
+      likeCount,
+      starred: !!bestRow,
+      bestCount,
+      bestRemaining,
+    };
+
+    res.render('skill-detail', {
+      skillName: 'Stunt Reels',
+      person: enriched,
+      total,
+      currentIdx,
+      totalPeople: reels.length,
+      location,
+      reelType: 'stunt',
     });
   } catch (err) {
     next(err);

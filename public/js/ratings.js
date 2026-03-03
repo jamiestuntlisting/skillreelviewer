@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
             skill_set_id: parseInt(card.dataset.skillSetId),
             user_id: parseInt(card.dataset.userId),
             skill_name: card.dataset.skillName,
+            reel_type: card.dataset.reelType || 'skill',
           }),
         });
 
@@ -51,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             skill_set_id: parseInt(card.dataset.skillSetId),
             user_id: parseInt(card.dataset.userId),
             skill_name: card.dataset.skillName,
+            reel_type: card.dataset.reelType || 'skill',
           }),
         });
 
@@ -105,7 +107,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = this.closest('.person-card') || this.closest('.feed-card');
       const skillName = card.dataset.skillName;
       const skillSetId = card.dataset.skillSetId;
-      const url = window.location.origin + '/skill/' + encodeURIComponent(skillName) + '?id=' + skillSetId;
+      const reelType = card.dataset.reelType || 'skill';
+      const url = reelType === 'stunt'
+        ? window.location.origin + '/stunt-reels?id=' + skillSetId
+        : window.location.origin + '/skill/' + encodeURIComponent(skillName) + '?id=' + skillSetId;
       try {
         await navigator.clipboard.writeText(url);
         showStatus(card, 'Link copied!');
@@ -216,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
           skill_set_id: parseInt(card.dataset.skillSetId),
           user_id: parseInt(card.dataset.userId),
           skill_name: card.dataset.skillName,
+          reel_type: card.dataset.reelType || 'skill',
         }),
       });
 

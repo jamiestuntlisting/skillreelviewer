@@ -95,6 +95,15 @@ db.exec(`
   }
 });
 
+// Add reel_type column to rating/flag tables (for stunt reels vs skill reels)
+['likes', 'best_skill_reels', 'broken_links', 'not_skill_reels', 'no_demo_skill', 'hidden_reels'].forEach(table => {
+  try {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN reel_type TEXT DEFAULT 'skill'`);
+  } catch (e) {
+    // Column already exists
+  }
+});
+
 // Hidden reels — performer hides their reel from all views
 db.exec(`
   CREATE TABLE IF NOT EXISTS hidden_reels (

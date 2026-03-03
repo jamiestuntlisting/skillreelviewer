@@ -24,27 +24,30 @@
       const loc = typeof location !== 'undefined' ? location : '';
       const locParam = loc ? '&location=' + encodeURIComponent(loc) : '';
       const locFirst = loc ? '?location=' + encodeURIComponent(loc) : '';
+      const isStunt = typeof reelType !== 'undefined' && reelType === 'stunt';
+      const baseUrl = isStunt ? '/stunt-reels' : '/skill/' + encodeURIComponent(skillName);
+      const allUrl = isStunt ? '/stunt-reels/all' : baseUrl + '/all';
     %>
     <div class="breadcrumb">
       <a href="/skills">Skills</a> &rsaquo; <strong><%= skillName %></strong>
     </div>
 
     <h1><%= skillName %></h1>
-    <p class="subtitle"><%= total %> skill reel<%= total !== 1 ? 's' : '' %><%= loc ? ' in ' + loc : '' %></p>
+    <p class="subtitle"><%= total %> <%= isStunt ? 'stunt' : 'skill' %> reel<%= total !== 1 ? 's' : '' %><%= loc ? ' in ' + loc : '' %></p>
     <p class="all-performers-link">
-      <a href="/skill/<%= encodeURIComponent(skillName) %>/all<%= locFirst %>">View all performers with this skill &rarr;</a>
+      <a href="<%= allUrl %><%= locFirst %>">View all performers <%= isStunt ? '' : 'with this skill ' %>&rarr;</a>
     </p>
 
     <% if (person) { %>
       <div class="viewer-nav">
         <% if (currentIdx > 0) { %>
-          <a href="/skill/<%= encodeURIComponent(skillName) %>?idx=<%= currentIdx - 1 %><%= locParam %>" class="nav-btn">&laquo; Previous</a>
+          <a href="<%= baseUrl %>?idx=<%= currentIdx - 1 %><%= locParam %>" class="nav-btn">&laquo; Previous</a>
         <% } else { %>
           <span class="nav-btn disabled">&laquo; Previous</span>
         <% } %>
         <span class="nav-counter"><%= currentIdx + 1 %> of <%= totalPeople %></span>
         <% if (currentIdx < totalPeople - 1) { %>
-          <a href="/skill/<%= encodeURIComponent(skillName) %>?idx=<%= currentIdx + 1 %><%= locParam %>" class="nav-btn">Next &raquo;</a>
+          <a href="<%= baseUrl %>?idx=<%= currentIdx + 1 %><%= locParam %>" class="nav-btn">Next &raquo;</a>
         <% } else { %>
           <span class="nav-btn disabled">Next &raquo;</span>
         <% } %>
@@ -53,7 +56,8 @@
       <div class="person-card single"
            data-skill-set-id="<%= person.skill_set_id %>"
            data-user-id="<%= person.userId %>"
-           data-skill-name="<%= person.skill_name %>"
+           data-skill-name="<%= skillName %>"
+           data-reel-type="<%= isStunt ? 'stunt' : 'skill' %>"
            data-liked="<%= person.liked ? 'true' : 'false' %>"
            data-starred="<%= person.starred ? 'true' : 'false' %>"
            data-best-remaining="<%= person.bestRemaining %>">
@@ -141,13 +145,13 @@
 
       <div class="viewer-nav bottom">
         <% if (currentIdx > 0) { %>
-          <a href="/skill/<%= encodeURIComponent(skillName) %>?idx=<%= currentIdx - 1 %><%= locParam %>" class="nav-btn">&laquo; Previous</a>
+          <a href="<%= baseUrl %>?idx=<%= currentIdx - 1 %><%= locParam %>" class="nav-btn">&laquo; Previous</a>
         <% } else { %>
           <span class="nav-btn disabled">&laquo; Previous</span>
         <% } %>
         <span class="nav-counter"><%= currentIdx + 1 %> of <%= totalPeople %></span>
         <% if (currentIdx < totalPeople - 1) { %>
-          <a href="/skill/<%= encodeURIComponent(skillName) %>?idx=<%= currentIdx + 1 %><%= locParam %>" class="nav-btn">Next &raquo;</a>
+          <a href="<%= baseUrl %>?idx=<%= currentIdx + 1 %><%= locParam %>" class="nav-btn">Next &raquo;</a>
         <% } else { %>
           <span class="nav-btn disabled">Next &raquo;</span>
         <% } %>

@@ -90,15 +90,49 @@ router.get('/my-reels', async (req, res, next) => {
     const feedbackCountMap = {};
     feedbackCounts.forEach(r => { feedbackCountMap[r.skill_set_id] = r.count; });
 
-    const enrichedReels = reels.map(r => ({
+    const enrichedSkillReels = reels.map(r => ({
       ...r,
+      reelType: 'skill',
       skillEmbed: getEmbedInfo(r.skill_url),
       isHidden: hiddenSet.has(r.skill_set_id),
       feedbackRequest: feedbackMap[r.skill_set_id] || null,
       feedbackCount: feedbackCountMap[r.skill_set_id] || 0,
     }));
 
-    res.render('my-reels', { reels: enrichedReels });
+    // Also fetch stunt reels for this user
+    const [stuntReels] = await mysql.query(
+      `SELECT
+         sr.id AS skill_set_id,
+         sr.title AS skill_name,
+         sr.reel_url AS skill_url,
+         sr.thumb_url
+       FROM stunt_reels sr
+       WHERE sr.userId = ?
+         AND sr.reel_url IS NOT NULL
+         AND TRIM(sr.reel_url) != ''
+       ORDER BY sr.title ASC`,
+      [userId]
+    );
+
+    const enrichedStuntReels = stuntReels.map(r => {
+      const embed = getEmbedInfo(r.skill_url);
+      if (embed && r.thumb_url && r.thumb_url.trim()) {
+        embed.thumbnail = r.thumb_url;
+      }
+      return {
+        ...r,
+        skill_name: r.skill_name || 'Stunt Reel',
+        level: null,
+        reelType: 'stunt',
+        skillEmbed: embed,
+        isHidden: false,
+        feedbackRequest: null,
+        feedbackCount: 0,
+      };
+    });
+
+    const allReels = [...enrichedSkillReels, ...enrichedStuntReels];
+    res.render('my-reels', { reels: allReels });
   } catch (err) {
     next(err);
   }

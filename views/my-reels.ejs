@@ -31,7 +31,7 @@
     <% } else { %>
       <div class="my-reels-list">
         <% reels.forEach(reel => { %>
-          <div class="reel-row" data-skill-set-id="<%= reel.skill_set_id %>">
+          <div class="reel-row" data-skill-set-id="<%= reel.skill_set_id %>" data-reel-type="<%= reel.reelType || 'skill' %>">
             <% if (reel.skillEmbed && reel.skillEmbed.thumbnail) { %>
               <img src="<%= reel.skillEmbed.thumbnail %>" alt="<%= reel.skill_name %>" class="reel-row-thumb">
             <% } else { %>
@@ -40,7 +40,9 @@
             <div class="reel-row-info">
               <div class="reel-skill-name"><%= reel.skill_name %></div>
               <div class="reel-row-meta">
-                <% if (reel.level && reel.level !== 'Not rated') { %>
+                <% if (reel.reelType === 'stunt') { %>
+                  <span class="status-badge" style="background:#2d2a1f;color:#f0c040;border:1px solid #5c5020;">Stunt Reel</span>
+                <% } else if (reel.level && reel.level !== 'Not rated') { %>
                   <span class="reel-level"><%= reel.level %></span>
                 <% } %>
                 <div class="reel-status-badges">
@@ -56,26 +58,40 @@
                 </div>
               </div>
             </div>
-            <div class="reel-row-actions">
-              <button class="reel-action-btn hide-btn<%= reel.isHidden ? ' hide-active' : '' %>"
-                      onclick="toggleHide(<%= reel.skill_set_id %>, this)">
-                <%= reel.isHidden ? 'Unhide' : 'Hide' %>
-              </button>
-              <% if (!reel.feedbackRequest) { %>
-                <button class="reel-action-btn feedback-req-btn"
-                        onclick="requestFeedback(<%= reel.skill_set_id %>, this)">
-                  Feedback
+            <% if (reel.reelType !== 'stunt') { %>
+              <div class="reel-row-actions">
+                <button class="reel-action-btn hide-btn<%= reel.isHidden ? ' hide-active' : '' %>"
+                        onclick="toggleHide(<%= reel.skill_set_id %>, this)">
+                  <%= reel.isHidden ? 'Unhide' : 'Hide from Rating' %>
                 </button>
-              <% } else { %>
-                <a href="/feedback/<%= reel.feedbackRequest.request_id %>" class="reel-action-btn feedback-active">
-                  View
-                </a>
-              <% } %>
-            </div>
+                <% if (!reel.feedbackRequest) { %>
+                  <button class="reel-action-btn feedback-req-btn"
+                          onclick="showFeedbackConfirm(<%= reel.skill_set_id %>, this)">
+                    Request Feedback
+                  </button>
+                <% } else { %>
+                  <a href="/feedback/<%= reel.feedbackRequest.request_id %>" class="reel-action-btn feedback-active">
+                    View Feedback
+                  </a>
+                <% } %>
+              </div>
+            <% } %>
           </div>
         <% }) %>
       </div>
     <% } %>
+    <!-- Feedback confirmation modal -->
+    <div id="feedback-confirm-modal" class="hidden-modal-overlay" onclick="if(event.target===this)closeFeedbackModal()">
+      <div class="hidden-modal">
+        <h3>Request Feedback</h3>
+        <p>Your reel will be visible for feedback for the next two weeks.</p>
+        <p>You may get feedback that is negative or mean spirited. Be ready for that. Getting feedback can be very difficult and everyone has opinions. If you think a message is hateful, please report it to us at <a href="mailto:info@stuntlisting.com">info@stuntlisting.com</a></p>
+        <div style="display:flex; gap:8px; margin-top:16px;">
+          <button class="modal-close-btn" onclick="closeFeedbackModal()" style="flex:1;">Cancel</button>
+          <button id="feedback-confirm-btn" class="feedback-submit-btn" onclick="confirmFeedbackRequest()" style="flex:1;">Request Feedback</button>
+        </div>
+      </div>
+    </div>
   </main>
   <script>
     async function toggleHide(skillSetId, btn) {
@@ -87,7 +103,7 @@
         });
         if (res.ok) {
           const data = await res.json();
-          btn.textContent = data.hidden ? 'Unhide' : 'Hide from Reviewers';
+          btn.textContent = data.hidden ? 'Unhide' : 'Hide from Rating';
           btn.classList.toggle('hide-active', data.hidden);
           const row = btn.closest('.reel-row');
           const badges = row.querySelector('.reel-status-badges');
@@ -106,7 +122,26 @@
       }
     }
 
-    async function requestFeedback(skillSetId, btn) {
+    let pendingFeedbackId = null;
+    let pendingFeedbackBtn = null;
+
+    function showFeedbackConfirm(skillSetId, btn) {
+      pendingFeedbackId = skillSetId;
+      pendingFeedbackBtn = btn;
+      document.getElementById('feedback-confirm-modal').style.display = 'flex';
+    }
+
+    function closeFeedbackModal() {
+      document.getElementById('feedback-confirm-modal').style.display = 'none';
+      pendingFeedbackId = null;
+      pendingFeedbackBtn = null;
+    }
+
+    async function confirmFeedbackRequest() {
+      if (!pendingFeedbackId || !pendingFeedbackBtn) return;
+      const btn = pendingFeedbackBtn;
+      const skillSetId = pendingFeedbackId;
+      closeFeedbackModal();
       try {
         const res = await fetch('/my-reels/request-feedback', {
           method: 'POST',

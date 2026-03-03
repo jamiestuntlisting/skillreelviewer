@@ -59,6 +59,29 @@ router.get('/skills', async (req, res, next) => {
 
     const [rows] = await mysql.query(skillsQuery, queryParams);
 
+    // Stunt reels count
+    let stuntQuery;
+    let stuntParams = [];
+    if (activeLocation) {
+      stuntQuery = `
+        SELECT COUNT(DISTINCT sr.userId) AS person_count
+        FROM stunt_reels sr
+        JOIN user u ON sr.userId = u.id
+        JOIN locations l ON u.primaryLocationId = l.id
+        WHERE sr.reel_url IS NOT NULL AND TRIM(sr.reel_url) != ''
+          AND l.name = ?
+      `;
+      stuntParams = [activeLocation];
+    } else {
+      stuntQuery = `
+        SELECT COUNT(DISTINCT sr.userId) AS person_count
+        FROM stunt_reels sr
+        WHERE sr.reel_url IS NOT NULL AND TRIM(sr.reel_url) != ''
+      `;
+    }
+    const [stuntRows] = await mysql.query(stuntQuery, stuntParams);
+    const stuntReelCount = stuntRows[0].person_count;
+
     const categories = [...new Set(rows.map(r => r.category).filter(Boolean))].sort();
 
     const filtered = activeCategory
@@ -71,6 +94,7 @@ router.get('/skills', async (req, res, next) => {
       activeCategory,
       locations,
       activeLocation,
+      stuntReelCount,
     });
   } catch (err) {
     next(err);

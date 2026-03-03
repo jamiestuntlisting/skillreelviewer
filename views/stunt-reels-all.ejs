@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stunt Reels - All Performers</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/skills" class="nav-brand">Skill Reel Rater</a>
+    <% if (user) { %>
+      <span class="nav-user">
+        <%= user.first_name %>
+        | <a href="/my-reels">My Reels</a>
+        | <a href="/feedback">Feedback</a>
+        <% if (user.id === 33) { %> | <a href="/admin/ratings">Admin</a><% } %>
+        | <a href="/logout">Logout</a>
+      </span>
+    <% } %>
+  </nav>
+  <main class="container">
+    <div class="breadcrumb">
+      <a href="/skills">Skills</a> &rsaquo;
+      <strong>Stunt Reels</strong>
+    </div>
+
+    <h1>Stunt Reels</h1>
+    <p class="subtitle">
+      <%= paidCount %> stunt reel<%= paidCount !== 1 ? 's' : '' %> viewable,
+      <%= freeCount %> hidden
+    </p>
+
+    <div class="performers-grid">
+      <% reels.forEach(reel => { %>
+        <% if (reel.isPaid && reel.paidIndex !== null) { %>
+          <%
+            let carouselUrl = '/stunt-reels?idx=' + reel.paidIndex;
+            if (location) carouselUrl += '&location=' + encodeURIComponent(location);
+          %>
+          <a href="<%= carouselUrl %>" class="performer-card performer-card-link">
+            <div class="person-header">
+              <% if (reel.display_image) { %>
+                <img src="<%= reel.display_image %>" alt="<%= reel.first_name %>" class="person-avatar">
+              <% } else { %>
+                <div class="person-avatar placeholder"><%= reel.first_name ? reel.first_name[0] : '?' %></div>
+              <% } %>
+              <div class="person-info">
+                <span class="person-name"><%= reel.first_name %> <%= reel.last_name %></span>
+                <% if (reel.title) { %>
+                  <span style="font-size:0.82rem;color:#8b949e;"><%= reel.title %></span>
+                <% } %>
+              </div>
+            </div>
+            <% if (reel.skillEmbed && reel.skillEmbed.thumbnail) { %>
+              <div class="thumb-link">
+                <img src="<%= reel.skillEmbed.thumbnail %>" alt="Stunt Reel" class="skill-thumbnail">
+              </div>
+            <% } else if (reel.skillEmbed) { %>
+              <div class="thumb-link thumb-placeholder">
+                <span>&#9654; Stunt Reel</span>
+              </div>
+            <% } %>
+            <% if (reel.liked) { %>
+              <span class="like-indicator">&#128077; Liked</span>
+            <% } %>
+          </a>
+        <% } else if (reel.isPaid) { %>
+          <div class="performer-card">
+            <div class="person-header">
+              <% if (reel.display_image) { %>
+                <img src="<%= reel.display_image %>" alt="<%= reel.first_name %>" class="person-avatar">
+              <% } else { %>
+                <div class="person-avatar placeholder"><%= reel.first_name ? reel.first_name[0] : '?' %></div>
+              <% } %>
+              <div class="person-info">
+                <span class="person-name"><%= reel.first_name %> <%= reel.last_name %></span>
+                <% if (reel.title) { %>
+                  <span style="font-size:0.82rem;color:#8b949e;"><%= reel.title %></span>
+                <% } %>
+              </div>
+            </div>
+            <% if (reel.skillEmbed && reel.skillEmbed.thumbnail) { %>
+              <div class="thumb-link">
+                <img src="<%= reel.skillEmbed.thumbnail %>" alt="Stunt Reel" class="skill-thumbnail">
+              </div>
+            <% } else if (reel.skillEmbed) { %>
+              <div class="thumb-link thumb-placeholder">
+                <span>&#9654; Stunt Reel</span>
+              </div>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="performer-card performer-hidden">
+            <div class="hidden-overlay" onclick="document.getElementById('hidden-modal').style.display='flex'">
+              <span class="hidden-overlay-text">HIDDEN</span>
+            </div>
+            <div class="person-header">
+              <% if (reel.display_image) { %>
+                <img src="<%= reel.display_image %>" alt="<%= reel.first_name %>" class="person-avatar">
+              <% } else { %>
+                <div class="person-avatar placeholder"><%= reel.first_name ? reel.first_name[0] : '?' %></div>
+              <% } %>
+              <div class="person-info">
+                <span class="person-name"><%= reel.first_name %> <%= reel.last_name %></span>
+              </div>
+            </div>
+            <% if (reel.skillEmbed && reel.skillEmbed.thumbnail) { %>
+              <div class="thumb-disabled">
+                <img src="<%= reel.skillEmbed.thumbnail %>" alt="Stunt Reel" class="skill-thumbnail">
+              </div>
+            <% } else if (reel.skillEmbed) { %>
+              <div class="thumb-disabled thumb-placeholder">
+                <span>&#9654; Stunt Reel</span>
+              </div>
+            <% } %>
+          </div>
+        <% } %>
+      <% }) %>
+    </div>
+
+    <!-- Hidden stunt reel modal -->
+    <div id="hidden-modal" class="hidden-modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+      <div class="hidden-modal">
+        <h3>Why is this stunt reel hidden?</h3>
+        <p>This stunt reel is hidden because stunt reels are a premium feature. This user is not a premium member of StuntListing.</p>
+        <p>To upgrade to a premium membership, visit:<br>
+          <a href="https://www.stuntlisting.com/membership_plans" target="_blank" rel="noopener">stuntlisting.com/membership_plans</a>
+        </p>
+        <button class="modal-close-btn" onclick="document.getElementById('hidden-modal').style.display='none'">Close</button>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
