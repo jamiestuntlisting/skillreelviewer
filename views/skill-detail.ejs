@@ -58,7 +58,7 @@
            data-starred="<%= person.starred ? 'true' : 'false' %>"
            data-best-remaining="<%= person.bestRemaining %>">
 
-        <% if (person.skillEmbed && (person.skillEmbed.type === 'youtube' || person.skillEmbed.type === 'vimeo')) { %>
+        <% if (person.skillEmbed && (person.skillEmbed.type === 'youtube' || person.skillEmbed.type === 'vimeo' || person.skillEmbed.type === 'instagram')) { %>
           <label class="mute-toggle corner-mute"><input type="checkbox" id="mute-checkbox"> Mute skill reel audio</label>
         <% } %>
 
@@ -93,6 +93,11 @@
                 <iframe id="skill-video" data-base-url="<%= person.skillEmbed.embedUrl %>" src="<%= person.skillEmbed.embedUrl %>" frameborder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowfullscreen loading="lazy"></iframe>
+              </div>
+            <% } else if (person.skillEmbed.type === 'instagram') { %>
+              <div class="video-container large instagram-embed">
+                <iframe id="skill-video" src="<%= person.skillEmbed.embedUrl %>" frameborder="0"
+                        allowfullscreen loading="lazy" scrolling="no"></iframe>
               </div>
             <% } else { %>
               <a href="<%= person.skillEmbed.originalUrl %>" target="_blank" rel="noopener" class="video-link">

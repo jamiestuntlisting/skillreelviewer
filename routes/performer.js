@@ -34,6 +34,15 @@ function getEmbedInfo(url) {
       thumbnail: null,
     };
   }
+  const igMatch = url.match(/instagram\.com\/(?:reel|p)\/([A-Za-z0-9_-]+)/);
+  if (igMatch) {
+    return {
+      type: 'instagram',
+      videoId: igMatch[1],
+      embedUrl: `https://www.instagram.com/reel/${igMatch[1]}/embed/`,
+      thumbnail: null,
+    };
+  }
   return { type: 'link', originalUrl: url, thumbnail: null };
 }
 

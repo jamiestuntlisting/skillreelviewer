@@ -29,48 +29,46 @@
         <p>Add skill reels on <a href="https://www.stuntlisting.com" target="_blank" rel="noopener">StuntListing</a> to manage them here.</p>
       </div>
     <% } else { %>
-      <div class="my-reels-grid">
+      <div class="my-reels-list">
         <% reels.forEach(reel => { %>
-          <div class="reel-card" data-skill-set-id="<%= reel.skill_set_id %>">
-            <div class="reel-card-header">
-              <div>
-                <div class="reel-skill-name"><%= reel.skill_name %></div>
+          <div class="reel-row" data-skill-set-id="<%= reel.skill_set_id %>">
+            <% if (reel.skillEmbed && reel.skillEmbed.thumbnail) { %>
+              <img src="<%= reel.skillEmbed.thumbnail %>" alt="<%= reel.skill_name %>" class="reel-row-thumb">
+            <% } else { %>
+              <div class="reel-row-thumb reel-row-thumb-placeholder">&#9654;</div>
+            <% } %>
+            <div class="reel-row-info">
+              <div class="reel-skill-name"><%= reel.skill_name %></div>
+              <div class="reel-row-meta">
                 <% if (reel.level && reel.level !== 'Not rated') { %>
-                  <div class="reel-level"><%= reel.level %></div>
+                  <span class="reel-level"><%= reel.level %></span>
                 <% } %>
-              </div>
-              <div class="reel-status-badges">
-                <% if (reel.isHidden) { %>
-                  <span class="status-badge status-hidden">Hidden</span>
-                <% } %>
-                <% if (reel.feedbackRequest) { %>
-                  <span class="status-badge status-feedback-open">Feedback Open</span>
-                <% } %>
-                <% if (reel.feedbackCount > 0) { %>
-                  <span class="status-badge status-feedback-count"><%= reel.feedbackCount %> feedback</span>
-                <% } %>
+                <div class="reel-status-badges">
+                  <% if (reel.isHidden) { %>
+                    <span class="status-badge status-hidden">Hidden</span>
+                  <% } %>
+                  <% if (reel.feedbackRequest) { %>
+                    <span class="status-badge status-feedback-open">Feedback Open</span>
+                  <% } %>
+                  <% if (reel.feedbackCount > 0) { %>
+                    <span class="status-badge status-feedback-count"><%= reel.feedbackCount %> feedback</span>
+                  <% } %>
+                </div>
               </div>
             </div>
-
-            <% if (reel.skillEmbed && reel.skillEmbed.thumbnail) { %>
-              <div class="reel-thumb">
-                <img src="<%= reel.skillEmbed.thumbnail %>" alt="<%= reel.skill_name %>">
-              </div>
-            <% } %>
-
-            <div class="reel-actions">
+            <div class="reel-row-actions">
               <button class="reel-action-btn hide-btn<%= reel.isHidden ? ' hide-active' : '' %>"
                       onclick="toggleHide(<%= reel.skill_set_id %>, this)">
-                <%= reel.isHidden ? 'Unhide' : 'Hide from Reviewers' %>
+                <%= reel.isHidden ? 'Unhide' : 'Hide' %>
               </button>
               <% if (!reel.feedbackRequest) { %>
                 <button class="reel-action-btn feedback-req-btn"
                         onclick="requestFeedback(<%= reel.skill_set_id %>, this)">
-                  Request Feedback
+                  Feedback
                 </button>
               <% } else { %>
                 <a href="/feedback/<%= reel.feedbackRequest.request_id %>" class="reel-action-btn feedback-active">
-                  View Feedback
+                  View
                 </a>
               <% } %>
             </div>
@@ -91,8 +89,8 @@
           const data = await res.json();
           btn.textContent = data.hidden ? 'Unhide' : 'Hide from Reviewers';
           btn.classList.toggle('hide-active', data.hidden);
-          const card = btn.closest('.reel-card');
-          const badges = card.querySelector('.reel-status-badges');
+          const row = btn.closest('.reel-row');
+          const badges = row.querySelector('.reel-status-badges');
           const existingHidden = badges.querySelector('.status-hidden');
           if (data.hidden && !existingHidden) {
             const badge = document.createElement('span');
@@ -119,8 +117,8 @@
           btn.textContent = 'Feedback Requested';
           btn.disabled = true;
           btn.classList.add('feedback-active');
-          const card = btn.closest('.reel-card');
-          const badges = card.querySelector('.reel-status-badges');
+          const row = btn.closest('.reel-row');
+          const badges = row.querySelector('.reel-status-badges');
           const badge = document.createElement('span');
           badge.className = 'status-badge status-feedback-open';
           badge.textContent = 'Feedback Open';

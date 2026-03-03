@@ -30,11 +30,11 @@
            data-starred="<%= reel.starred ? 'true' : 'false' %>"
            data-best-remaining="<%= bestRemaining %>">
 
-        <% if (reel.skillEmbed && (reel.skillEmbed.type === 'youtube' || reel.skillEmbed.type === 'vimeo')) { %>
+        <% if (reel.skillEmbed && (reel.skillEmbed.type === 'youtube' || reel.skillEmbed.type === 'vimeo' || reel.skillEmbed.type === 'instagram')) { %>
           <div class="feed-video">
             <iframe src="<%= reel.skillEmbed.embedUrl %>" frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen loading="lazy"></iframe>
+                    allowfullscreen loading="lazy" <%= reel.skillEmbed.type === 'instagram' ? 'scrolling="no"' : '' %>></iframe>
           </div>
         <% } %>
 

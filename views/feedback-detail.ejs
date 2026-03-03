@@ -52,6 +52,11 @@
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowfullscreen loading="lazy"></iframe>
             </div>
+          <% } else if (reel.skillEmbed.type === 'instagram') { %>
+            <div class="video-container large instagram-embed">
+              <iframe src="<%= reel.skillEmbed.embedUrl %>" frameborder="0"
+                      allowfullscreen loading="lazy" scrolling="no"></iframe>
+            </div>
           <% } else { %>
             <a href="<%= reel.skillEmbed.originalUrl %>" target="_blank" rel="noopener" class="video-link">
               View Skill Reel &rarr;

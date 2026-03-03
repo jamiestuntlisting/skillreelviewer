@@ -11,8 +11,9 @@ function resolveImageUrl(path) {
   return IMAGE_BASE + path;
 }
 
-// Cache for Vimeo thumbnails (in-memory, persists for server lifetime)
+// Cache for Vimeo/Instagram thumbnails (in-memory, persists for server lifetime)
 const vimeoThumbCache = {};
+const instagramThumbCache = {};
 
 async function fetchVimeoThumbnail(videoId) {
   if (vimeoThumbCache[videoId] !== undefined) return vimeoThumbCache[videoId];
@@ -27,6 +28,23 @@ async function fetchVimeoThumbnail(videoId) {
     // Ignore fetch errors
   }
   vimeoThumbCache[videoId] = null;
+  return null;
+}
+
+async function fetchInstagramThumbnail(shortcode) {
+  if (instagramThumbCache[shortcode] !== undefined) return instagramThumbCache[shortcode];
+  try {
+    const url = `https://www.instagram.com/reel/${shortcode}/`;
+    const resp = await fetch(`https://graph.facebook.com/v18.0/instagram_oembed?url=${encodeURIComponent(url)}&access_token=${process.env.INSTAGRAM_TOKEN || ''}`, { signal: AbortSignal.timeout(5000) });
+    if (resp.ok) {
+      const data = await resp.json();
+      instagramThumbCache[shortcode] = data.thumbnail_url || null;
+      return instagramThumbCache[shortcode];
+    }
+  } catch (e) {
+    // Ignore — Instagram oembed requires a token, fallback to null
+  }
+  instagramThumbCache[shortcode] = null;
   return null;
 }
 
@@ -52,6 +70,17 @@ function getEmbedInfo(url) {
       videoId: vimeoMatch[1],
       embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}`,
       thumbnail: null, // will be filled async
+    };
+  }
+
+  // Instagram reels: instagram.com/reel/CODE/ or instagram.com/p/CODE/
+  const igMatch = url.match(/instagram\.com\/(?:reel|p)\/([A-Za-z0-9_-]+)/);
+  if (igMatch) {
+    return {
+      type: 'instagram',
+      videoId: igMatch[1],
+      embedUrl: `https://www.instagram.com/reel/${igMatch[1]}/embed/`,
+      thumbnail: null, // will be filled async if token available
     };
   }
 
@@ -138,13 +167,17 @@ router.get('/skill/:skillName/all', async (req, res, next) => {
         };
       });
 
-    // Fetch Vimeo thumbnails in parallel
-    const vimeoPromises = people
-      .filter(p => p.skillEmbed && p.skillEmbed.type === 'vimeo')
+    // Fetch Vimeo + Instagram thumbnails in parallel
+    const thumbPromises = people
+      .filter(p => p.skillEmbed && (p.skillEmbed.type === 'vimeo' || p.skillEmbed.type === 'instagram'))
       .map(async p => {
-        p.skillEmbed.thumbnail = await fetchVimeoThumbnail(p.skillEmbed.videoId);
+        if (p.skillEmbed.type === 'vimeo') {
+          p.skillEmbed.thumbnail = await fetchVimeoThumbnail(p.skillEmbed.videoId);
+        } else if (p.skillEmbed.type === 'instagram') {
+          p.skillEmbed.thumbnail = await fetchInstagramThumbnail(p.skillEmbed.videoId);
+        }
       });
-    await Promise.all(vimeoPromises);
+    await Promise.all(thumbPromises);
 
     // Get current rater's likes
     const raterId = req.session.user ? req.session.user.id : null;
@@ -156,13 +189,13 @@ router.get('/skill/:skillName/all', async (req, res, next) => {
     const likeCountMap = {};
     allLikeCounts.forEach(r => { likeCountMap[r.skill_set_id] = r.count; });
 
-    // Track carousel index — only count paid users with YouTube/Vimeo embeds
+    // Track carousel index — only count paid users with embeddable videos
     // (must match the carousel route's filtering exactly)
     let carouselIdx = 0;
     const enrichedPeople = people.map(p => {
       const inCarousel = p.isPaid &&
         p.skillEmbed &&
-        (p.skillEmbed.type === 'youtube' || p.skillEmbed.type === 'vimeo');
+        (p.skillEmbed.type === 'youtube' || p.skillEmbed.type === 'vimeo' || p.skillEmbed.type === 'instagram');
       const result = {
         ...p,
         liked: likedSet.has(p.skill_set_id),
@@ -212,7 +245,7 @@ router.get('/skill/:skillName', async (req, res, next) => {
        AND ss.skill_url IS NOT NULL
        AND TRIM(ss.skill_url) != ''
        AND TRIM(ss.skill_url) != ' '
-       AND (ss.skill_url LIKE '%youtube.com%' OR ss.skill_url LIKE '%youtu.be%' OR ss.skill_url LIKE '%vimeo.com%')
+       AND (ss.skill_url LIKE '%youtube.com%' OR ss.skill_url LIKE '%youtu.be%' OR ss.skill_url LIKE '%vimeo.com%' OR ss.skill_url LIKE '%instagram.com%')
        AND u.subscription_type IN ('standard_monthly', 'standard_yearly', 'plus_monthly', 'plus_yearly')
        AND u.is_subscription_active = 1
        ${locFilter.clause}
@@ -313,7 +346,7 @@ router.get('/feed', async (req, res, next) => {
        WHERE ss.skill_url IS NOT NULL
          AND TRIM(ss.skill_url) != ''
          AND TRIM(ss.skill_url) != ' '
-         AND (ss.skill_url LIKE '%youtube.com%' OR ss.skill_url LIKE '%youtu.be%' OR ss.skill_url LIKE '%vimeo.com%')
+         AND (ss.skill_url LIKE '%youtube.com%' OR ss.skill_url LIKE '%youtu.be%' OR ss.skill_url LIKE '%vimeo.com%' OR ss.skill_url LIKE '%instagram.com%')
          AND u.subscription_type IN ('standard_monthly', 'standard_yearly', 'plus_monthly', 'plus_yearly')
          AND u.is_subscription_active = 1
        ORDER BY ss.id DESC
